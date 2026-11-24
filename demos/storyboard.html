@@ -1,0 +1,633 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>分镜脚本节点与画布 Agent 工作流</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --ground:#F6F5F3; --surface:#FFFFFF; --surface-2:#EDEBE8; --sunk:#E4E1DC;
+  --ink:#1A1A19; --ink-2:#3D3C38; --muted:#726F68;
+  --line:#DEDBD5; --line-2:#C4C0B8;
+  --accent:#A6412A; --accent-ink:#A6412A; --accent-soft:#F6EAE6;
+  --ok:#3F6B45; --bad:#A6412A;
+  --sans:'Archivo','PingFang SC','Hiragino Sans GB','Microsoft YaHei',system-ui,sans-serif;
+  --mono:'JetBrains Mono','SFMono-Regular',Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#131312; --surface:#1B1B19; --surface-2:#232320; --sunk:#100F0E;
+    --ink:#EDECE8; --ink-2:#BDBBB4; --muted:#8B887F;
+    --line:#2C2C28; --line-2:#3D3C37;
+    --accent:#E08060; --accent-ink:#EE9B7E; --accent-soft:#2A1C17;
+    --ok:#7FBF89; --bad:#E08060;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#131312; --surface:#1B1B19; --surface-2:#232320; --sunk:#100F0E;
+  --ink:#EDECE8; --ink-2:#BDBBB4; --muted:#8B887F;
+  --line:#2C2C28; --line-2:#3D3C37;
+  --accent:#E08060; --accent-ink:#EE9B7E; --accent-soft:#2A1C17;
+  --ok:#7FBF89; --bad:#E08060;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto;padding-inline:16px}
+
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--ground) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-block:10px}
+.tb-name{font-weight:600;font-size:14px;letter-spacing:-.01em}
+.tb-tag{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-2);border-radius:2px;padding:2px 6px}
+.tb-sp{flex:1}
+.lang{display:inline-flex;border:1px solid var(--line-2);border-radius:3px;overflow:hidden;flex-shrink:0}
+.lang button{font-family:var(--mono);font-size:10.5px;padding:3px 8px;border:0;background:var(--surface);color:var(--muted);cursor:pointer}
+.lang button+button{border-left:1px solid var(--line-2)}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
+
+section{padding-block:50px;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:0}
+.slate{display:inline-flex;align-items:center;gap:0;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;margin-bottom:14px}
+.slate i{font-style:normal;background:var(--ink);color:var(--ground);padding:3px 7px;border-radius:2px 0 0 2px}
+.slate span{background:var(--surface-2);color:var(--muted);padding:3px 9px;border:1px solid var(--line);border-left:0;border-radius:0 2px 2px 0;text-transform:uppercase}
+h1{font-size:clamp(27px,5vw,41px);line-height:1.13;letter-spacing:-.027em;font-weight:700;margin:0 0 14px;text-wrap:balance;max-width:19ch}
+h2{font-size:clamp(19px,2.9vw,25px);line-height:1.25;letter-spacing:-.02em;font-weight:600;margin:0 0 12px;text-wrap:balance}
+h3{font-size:15px;font-weight:600;margin:0 0 5px;letter-spacing:-.005em}
+p{margin:0 0 14px;color:var(--ink-2);max-width:66ch}
+p:last-child{margin-bottom:0}
+strong{color:var(--ink);font-weight:600}
+.lede{font-size:17px;line-height:1.58;color:var(--ink-2);max-width:58ch}
+.hero{padding-top:44px}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:22px}
+.chip{font-family:var(--mono);font-size:11px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:3px 8px}
+.notice{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:4px;padding:12px 14px;margin-top:26px}
+.notice .ic{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent-ink);letter-spacing:.09em;flex-shrink:0;padding-top:3px}
+.notice p{margin:0;font-size:13px;line-height:1.6}
+
+.scroller{overflow-x:auto;border:1px solid var(--line);border-radius:5px;background:var(--surface);padding:10px}
+.scroller svg{display:block;min-width:860px;width:100%;height:auto}
+.fg-box{fill:var(--surface-2);stroke:var(--line-2)}
+.fg-acc{fill:var(--accent-soft);stroke:var(--accent)}
+.fg-t{fill:var(--ink);font-family:var(--sans);font-size:12.5px;font-weight:600}
+.fg-s{fill:var(--muted);font-family:var(--mono);font-size:9.6px}
+.fg-n{fill:var(--muted);font-family:var(--mono);font-size:9px;letter-spacing:.09em}
+.fg-l{stroke:var(--line-2);fill:none;stroke-width:1.4}
+.fg-lb{stroke:var(--accent);fill:none;stroke-width:1.4;stroke-dasharray:4 3}
+.cap{font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5}
+
+.layers{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-top:20px}
+.ly{background:var(--surface);padding:15px 17px;display:grid;grid-template-columns:120px 1fr;gap:4px 18px;align-items:start}
+@media(max-width:620px){.ly{grid-template-columns:1fr;gap:6px}}
+.ly .tagn{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);font-weight:700;padding-top:2px}
+.ly h3{margin-bottom:3px}
+.ly p{font-size:13.5px;margin:0;line-height:1.55}
+.ly .ex{grid-column:1/-1;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);background:var(--sunk);border-radius:3px;padding:9px 11px;margin-top:9px;line-height:1.75;white-space:pre-wrap}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+.rub th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500;padding:0 14px 9px 0;border-bottom:1px solid var(--line-2)}
+.rub td{padding:13px 14px 13px 0;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2)}
+.rub td:first-child{white-space:nowrap;color:var(--ink);font-weight:600}
+.rub code{font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:2px;padding:1px 5px}
+
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:20px}
+.col{background:var(--surface);border:1px solid var(--line);border-top:2px solid var(--accent);border-radius:4px;padding:16px}
+.col p{font-size:13.5px;margin:0;line-height:1.56}
+
+.own{margin-top:18px;border-top:1px solid var(--line)}
+.own .r{display:grid;grid-template-columns:160px 1fr;gap:4px 20px;padding:13px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+@media(max-width:620px){.own .r{grid-template-columns:1fr;gap:4px}}
+.own .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:3px}
+.own .v{color:var(--ink-2)}
+.own .v b{color:var(--ink);font-weight:600}
+
+footer{padding-block:32px 44px;font-size:13px;color:var(--muted)}
+.ft{display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--mono);font-size:12px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+
+.demo{border:1px solid var(--line-2);border-radius:6px;background:var(--surface);overflow:hidden;margin-top:20px}
+.demo-bar{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--muted);flex-wrap:wrap}
+.demo-bar b{color:var(--accent-ink);font-weight:700;letter-spacing:.06em}
+.demo-in{padding:16px 16px 4px}
+.demo-in label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.demo-in input[type=text]{width:100%;font-family:var(--sans);font-size:14px;color:var(--ink);background:var(--sunk);border:1px solid var(--line-2);border-radius:4px;padding:9px 11px}
+.segs{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:14px}
+.seg{display:flex;flex-wrap:wrap;gap:5px}
+.seg button{font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:3px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .seg button[aria-pressed="true"],:root:not([data-theme="light"]) .seg button[aria-pressed="true"]{color:#131312}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .seg button[aria-pressed="true"]{color:#fff}}
+.demo-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1px;background:var(--line);border-top:1px solid var(--line);margin-top:16px}
+@media(max-width:760px){.demo-split{grid-template-columns:1fr}}
+.demo-pane{background:var(--surface);padding:14px 16px}
+.demo-pane .ph{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.out{font-family:var(--mono);font-size:11.5px;line-height:1.85;color:var(--ink-2);white-space:pre-wrap;word-break:break-word}
+.out .kk{color:var(--accent-ink);font-weight:500}
+.shot{border:1px solid var(--line);border-radius:4px;padding:9px 11px;margin-bottom:7px;background:var(--sunk)}
+.shot:last-child{margin-bottom:0}
+.shot .sn{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em}
+.shot .sd{font-size:12.5px;color:var(--ink);margin-top:2px;line-height:1.45}
+.shot .bs{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.bdg{font-family:var(--mono);font-size:9.5px;padding:2px 6px;border-radius:2px;border:1px solid;white-space:nowrap}
+.bdg.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent);background:color-mix(in srgb,var(--ok) 9%,transparent)}
+.bdg.no{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 45%,transparent);background:color-mix(in srgb,var(--bad) 9%,transparent)}
+.retry{font-family:var(--mono);font-size:10.5px;color:var(--accent-ink);margin-top:6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<div class="topbar">
+  <div class="wrap">
+    <span class="tb-name" data-i18n="tb.name"></span>
+    <span class="tb-tag" data-i18n="tb.tag"></span>
+    <span class="tb-sp"></span>
+    <span class="lang" id="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="zh" aria-pressed="false">中文</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </span>
+  </div>
+</div>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="slate"><i data-i18n="sl.0i"></i><span data-i18n="sl.0s"></span></div>
+    <h1 data-i18n="hero.h1"></h1>
+    <p class="lede" data-i18n="hero.lede"></p>
+    <div class="chips">
+      <span class="chip" data-i18n="chip.1"></span><span class="chip" data-i18n="chip.2"></span>
+      <span class="chip" data-i18n="chip.3"></span><span class="chip" data-i18n="chip.4"></span>
+      <span class="chip" data-i18n="chip.5"></span>
+    </div>
+    <div class="notice">
+      <span class="ic" data-i18n="notice.ic"></span>
+      <p data-i18n="notice.body"></p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="slate"><i data-i18n="sl.1i"></i><span data-i18n="sl.1s"></span></div>
+    <h2 data-i18n="p1.h2"></h2>
+    <p data-i18n="p1.a"></p>
+    <p data-i18n="p1.b"></p>
+    <div class="cols">
+      <div class="col"><h3 data-i18n="p1.c1h"></h3><p data-i18n="p1.c1p"></p></div>
+      <div class="col"><h3 data-i18n="p1.c2h"></h3><p data-i18n="p1.c2p"></p></div>
+      <div class="col"><h3 data-i18n="p1.c3h"></h3><p data-i18n="p1.c3p"></p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="slate"><i data-i18n="sl.2i"></i><span data-i18n="sl.2s"></span></div>
+    <h2 data-i18n="p2.h2"></h2>
+    <p data-i18n="p2.a"></p>
+    <div class="layers">
+      <div class="ly">
+        <span class="tagn">POSITIVE</span>
+        <div><h3 data-i18n="p2.l1h"></h3><p data-i18n="p2.l1p"></p></div>
+      </div>
+      <div class="ly">
+        <span class="tagn">NEGATIVE</span>
+        <div><h3 data-i18n="p2.l2h"></h3><p data-i18n="p2.l2p"></p></div>
+      </div>
+      <div class="ly">
+        <span class="tagn">PARAMETERS</span>
+        <div><h3 data-i18n="p2.l3h"></h3><p data-i18n="p2.l3p"></p></div>
+        <div class="ex" data-i18n="p2.ex"></div>
+      </div>
+    </div>
+    <p style="margin-top:18px" data-i18n="p2.b"></p>
+  </div>
+</section>
+
+
+<section>
+  <div class="wrap">
+    <div class="slate"><i data-i18n="sl.di"></i><span data-i18n="sl.ds"></span></div>
+    <h2 data-i18n="pd.h2"></h2>
+    <p data-i18n="pd.a"></p>
+
+    <div class="demo">
+      <div class="demo-bar"><b data-i18n="pd.badge"></b><span data-i18n="pd.barnote"></span></div>
+      <div class="demo-in">
+        <label for="idea" data-i18n="pd.lbl"></label>
+        <input type="text" id="idea" autocomplete="off">
+        <div class="segs">
+          <div><label data-i18n="pd.lstyle"></label><div class="seg" id="seg-style"></div></div>
+          <div><label data-i18n="pd.lshot"></label><div class="seg" id="seg-shot"></div></div>
+          <div><label data-i18n="pd.lmood"></label><div class="seg" id="seg-mood"></div></div>
+        </div>
+      </div>
+      <div class="demo-split">
+        <div class="demo-pane">
+          <div class="ph" data-i18n="pd.p1"></div>
+          <div class="out" id="out-prompt"></div>
+        </div>
+        <div class="demo-pane">
+          <div class="ph" data-i18n="pd.p2"></div>
+          <div id="out-shots"></div>
+        </div>
+      </div>
+    </div>
+    <p class="cap" data-i18n="pd.cap"></p>
+  </div>
+</section>
+<section>
+  <div class="wrap">
+    <div class="slate"><i data-i18n="sl.3i"></i><span data-i18n="sl.3s"></span></div>
+    <h2 data-i18n="p3.h2"></h2>
+    <p data-i18n="p3.a"></p>
+
+    <div class="scroller">
+      <svg viewBox="0 0 900 292" role="img" data-i18n-attr="aria-label|p3.alt">
+        <defs>
+          <marker id="sa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,1 L9,5 L0,9 z" fill="var(--line-2)"></path>
+          </marker>
+          <marker id="sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,1 L9,5 L0,9 z" fill="var(--accent)"></path>
+          </marker>
+        </defs>
+
+        <text x="6" y="20" class="fg-n">01</text>
+        <rect x="6" y="28" width="132" height="56" rx="4" class="fg-box"></rect>
+        <text x="18" y="52" class="fg-t" data-i18n="nd.1t"></text>
+        <text x="18" y="70" class="fg-s" data-i18n="nd.1s"></text>
+
+        <path d="M144,56 L178,56" class="fg-l" marker-end="url(#sa)"></path>
+
+        <text x="184" y="20" class="fg-n">02</text>
+        <rect x="184" y="28" width="140" height="56" rx="4" class="fg-acc"></rect>
+        <text x="196" y="52" class="fg-t" data-i18n="nd.2t"></text>
+        <text x="196" y="70" class="fg-s" data-i18n="nd.2s"></text>
+
+        <path d="M330,56 L364,56" class="fg-l" marker-end="url(#sa)"></path>
+
+        <text x="370" y="20" class="fg-n">03</text>
+        <rect x="370" y="28" width="140" height="56" rx="4" class="fg-acc"></rect>
+        <text x="382" y="52" class="fg-t" data-i18n="nd.3t"></text>
+        <text x="382" y="70" class="fg-s" data-i18n="nd.3s"></text>
+
+        <path d="M516,56 L550,56" class="fg-l" marker-end="url(#sa)"></path>
+
+        <text x="556" y="20" class="fg-n">04</text>
+        <rect x="556" y="28" width="140" height="56" rx="4" class="fg-box"></rect>
+        <text x="568" y="52" class="fg-t" data-i18n="nd.4t"></text>
+        <text x="568" y="70" class="fg-s" data-i18n="nd.4s"></text>
+
+        <path d="M660,90 L660,124" class="fg-l" marker-end="url(#sa)"></path>
+
+        <text x="556" y="142" class="fg-n">05</text>
+        <rect x="556" y="130" width="140" height="56" rx="4" class="fg-acc"></rect>
+        <text x="568" y="154" class="fg-t" data-i18n="nd.5t"></text>
+        <text x="568" y="172" class="fg-s" data-i18n="nd.5s"></text>
+
+        <path d="M702,158 L742,158" class="fg-l" marker-end="url(#sa)"></path>
+        <text x="748" y="142" class="fg-n">06</text>
+        <rect x="748" y="130" width="146" height="56" rx="4" class="fg-box"></rect>
+        <text x="760" y="154" class="fg-t" data-i18n="nd.6t"></text>
+        <text x="760" y="172" class="fg-s" data-i18n="nd.6s"></text>
+
+        <path d="M556,158 L440,158 L440,214" class="fg-lb" marker-end="url(#sb)"></path>
+        <rect x="336" y="220" width="208" height="52" rx="4" class="fg-acc"></rect>
+        <text x="348" y="242" class="fg-t" data-i18n="nd.7t"></text>
+        <text x="348" y="260" class="fg-s" data-i18n="nd.7s"></text>
+        <text x="452" y="196" class="fg-s" data-i18n="nd.fail"></text>
+
+        <path d="M336,246 L300,246 L300,108 L590,108 L590,88" class="fg-lb" marker-end="url(#sb)"></path>
+        <text x="292" y="182" class="fg-s" text-anchor="end" data-i18n="nd.loop"></text>
+      </svg>
+    </div>
+    <p class="cap" data-i18n="p3.cap"></p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="slate"><i data-i18n="sl.4i"></i><span data-i18n="sl.4s"></span></div>
+    <h2 data-i18n="p4.h2"></h2>
+    <p data-i18n="p4.a"></p>
+    <div class="scroller" style="padding:16px">
+      <table class="rub">
+        <thead><tr><th data-i18n="p4.th1"></th><th data-i18n="p4.th2"></th><th data-i18n="p4.th3"></th></tr></thead>
+        <tbody>
+          <tr><td data-i18n="p4.r1a"></td><td data-i18n="p4.r1b"></td><td data-i18n="p4.r1c"></td></tr>
+          <tr><td data-i18n="p4.r2a"></td><td data-i18n="p4.r2b"></td><td data-i18n="p4.r2c"></td></tr>
+          <tr><td data-i18n="p4.r3a"></td><td data-i18n="p4.r3b"></td><td data-i18n="p4.r3c"></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:16px" data-i18n="p4.b"></p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="slate"><i data-i18n="sl.5i"></i><span data-i18n="sl.5s"></span></div>
+    <h2 data-i18n="p5.h2"></h2>
+    <p data-i18n="p5.a"></p>
+    <div class="cols">
+      <div class="col"><h3 data-i18n="p5.c1h"></h3><p data-i18n="p5.c1p"></p></div>
+      <div class="col"><h3 data-i18n="p5.c2h"></h3><p data-i18n="p5.c2p"></p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="slate"><i data-i18n="sl.6i"></i><span data-i18n="sl.6s"></span></div>
+    <h2 data-i18n="p6.h2"></h2>
+    <div class="own">
+      <div class="r"><div class="k" data-i18n="p6.k1"></div><div class="v" data-i18n="p6.v1"></div></div>
+      <div class="r"><div class="k" data-i18n="p6.k2"></div><div class="v" data-i18n="p6.v2"></div></div>
+      <div class="r"><div class="k" data-i18n="p6.k3"></div><div class="v" data-i18n="p6.v3"></div></div>
+      <div class="r"><div class="k" data-i18n="p6.k4"></div><div class="v" data-i18n="p6.v4"></div></div>
+    </div>
+    <p style="margin-top:20px" data-i18n="p6.close"></p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="ft">
+      <span>许丁玥 Dingyue Xu</span>
+      <span data-i18n="ft.role"></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var T = {
+    zh: {
+      'tb.name':'分镜脚本节点与画布 Agent 工作流','tb.tag':'已脱敏 · 设计方法拆解',
+      'sl.0i':'00','sl.0s':'AIGC 创作工具 · 产品设计',
+      'hero.h1':'让一句话变成一条多镜头的片子，难的从来不是生成',
+      'hero.lede':'这是我在一款 AIGC 创作类 App 中负责的分镜脚本与画布 Agent 工作流设计。核心命题只有一个：单帧好看不难，难的是第二镜里的人还是第一镜那个人。本页拆解我为此做的三层提示词架构、工作流编排与一致性评测口径。',
+      'chip.1':'分镜拆解','chip.2':'三层提示词预设','chip.3':'画布 Agent 编排','chip.4':'一致性评测','chip.5':'参数档位',
+      'notice.ic':'脱敏',
+      'notice.body':'本页展示的是我当时做的<strong>设计原型</strong>，用于验证交互与提示词拼装逻辑；产品后续完成全栈开发并正式上线。页面仅呈现我本人负责的设计方法与决策逻辑，不含真实产品界面、内部命名、模型名称与具体参数值，所有演示数据均为示意。',
+
+      'sl.di':'D','sl.ds':'原型演示 · 可交互',
+      'pd.h2':'改一个选项，看三层提示词怎么被重新拼出来',
+      'pd.a':'下面是我按当时的设计做的可交互原型。输入一句创意、选择风格镜头与情绪，系统即时拼装三层提示词并给出分镜序列与逐镜的一致性判定。它演示的是架构本身：用户说人话，系统产出结构化提示词。',
+      'pd.badge':'原型演示','pd.barnote':'示意数据 · 不调用真实模型',
+      'pd.lbl':'一句话创意','pd.lstyle':'风格','pd.lshot':'镜头','pd.lmood':'情绪',
+      'pd.p1':'拼装后的三层提示词','pd.p2':'分镜序列与一致性判定',
+      'pd.cap':'该原型用于验证交互与提示词拼装逻辑，演示数据为示意。产品后续完成全栈开发并正式上线，3 周产出可测试版本、1 个月内上线。',
+      'pd.retry':'未通过，带修正回退重生成',
+      'st.1':'写实','st.2':'插画','st.3':'胶片','st.4':'3D',
+      'sh.1':'特写','sh.2':'中景','sh.3':'全景','sh.4':'跟拍',
+      'mo.1':'温暖','mo.2':'紧张','mo.3':'轻快','mo.4':'克制',
+      'pd.idea':'一个女孩在深夜的便利店遇到一只会说话的猫',
+      'pd.s1':'建立镜头，交代地点与时间','pd.s2':'主体出场，锁定角色特征','pd.s3':'关键事件，情绪转折点','pd.s4':'收尾镜头，留白与落点',
+      'bd.id':'身份','bd.vis':'画质','bd.tmp':'时序',
+      'sl.1i':'01','sl.1s':'问题定义',
+      'p1.h2':'三个一致性问题，决定成片能不能用',
+      'p1.a':'用户给的是一句话，想要的是一条能发出去的片子。生成模型在单帧上早已够用，但把多个镜头接起来的时候，问题才开始出现：人物换了张脸、风格从写实漂到插画、上一镜的动作和下一镜接不上。',
+      'p1.b':'我把这类失败拆成三个可以分别判定的维度，后续的提示词架构、工作流编排与评测口径都围绕它们展开。',
+      'p1.c1h':'身份保持','p1.c1p':'同一角色在不同镜头之间是否还是同一个人。这是用户最先发现、也最不能容忍的一类失败。',
+      'p1.c2h':'画质稳定性','p1.c2p':'构图、材质、光线与风格是否在整条片子里保持同一套视觉语言，不出现中途漂移。',
+      'p1.c3h':'时序一致性','p1.c3p':'镜头之间的动作、视角与场景状态是否接得上，不出现跳帧式的断裂。',
+
+      'sl.2i':'02','sl.2s':'提示词架构',
+      'p2.h2':'把提示词从个人技巧变成产品能力',
+      'p2.a':'创作者不应该为了出一张图去学提示词语法。所以我没有把输入框交给用户，而是让用户选择风格、镜头与情绪这类人话，由系统拼装成三层结构化提示词。用户零提示词输入也能稳定出片，而提示词本身成为可维护、可版本化的产品资产。',
+      'p2.l1h':'正向层','p2.l1p':'描述要什么。由用户的选择映射而来，并绑定角色锚定信息，使同一角色在不同镜头中沿用同一组描述。',
+      'p2.l2h':'负向层','p2.l2p':'描述不要什么。这一层是把踩过的坑固化下来的地方，常见的崩坏形态、比例失衡与风格污染都写在这里，用户看不到但每次生成都在生效。',
+      'p2.l3h':'参数层','p2.l3p':'描述怎么出。采样方式、步数、权重与尺寸等控制项，按场景归档成档位，而不是每次让人手调。',
+      'p2.ex':'user_selection  →  style · shot · mood\n                  ↓\npositive   = subject + identity_anchor + style_tokens\nnegative   = failure_patterns + style_contamination\nparameters = sampler + steps + weights + ratio  (by tier)',
+      'p2.b':'这个设计带来的真正收益不在单次出图质量，而在可维护性：当某一类崩坏被发现，修的是负向层的一条规则，不是让每个用户自己去试。',
+
+      'sl.3i':'03','sl.3s':'工作流编排',
+      'p3.h2':'画布 Agent 的一条主链路与一条回退链路',
+      'p3.a':'我在画布端把分镜到成片的过程编排成一条显式的工作流。它和一次性生成的区别在于：角色锚定发生在逐镜生成之前，而一致性校验发生在合成之前，不通过就回退重生成，而不是把问题留给用户自己重试。',
+      'p3.alt':'工作流图：从创意输入到分镜拆解、角色锚定、逐镜生成、一致性校验，通过则合成输出，未通过则回退至逐镜生成重跑',
+      'nd.1t':'创意输入','nd.1s':'一句话 / 选项',
+      'nd.2t':'分镜拆解','nd.2s':'拆成镜头序列',
+      'nd.3t':'角色锚定','nd.3s':'锁定身份特征',
+      'nd.4t':'逐镜生成','nd.4s':'套用三层提示词',
+      'nd.5t':'一致性校验','nd.5s':'三维度逐镜判定',
+      'nd.6t':'合成输出','nd.6s':'成片',
+      'nd.7t':'定位失败维度','nd.7s':'判断是身份、画质还是时序',
+      'nd.fail':'未通过','nd.loop':'带修正回退重生成',
+      'p3.cap':'示意图，用于说明编排逻辑与回退路径，不代表实际节点命名与实现方式。',
+
+      'sl.4i':'04','sl.4s':'评测口径',
+      'p4.h2':'横向对比多套工作流，需要先定义怎么算好',
+      'p4.a':'画布上能跑通的工作流不止一套，选哪一套不能靠肉眼看几张图。我为三个一致性维度分别定义了判定方式，使不同编排方案可以被放在同一把尺子上比较，并在迭代中持续复用。',
+      'p4.th1':'维度','p4.th2':'判定什么','p4.th3':'为什么重要',
+      'p4.r1a':'身份保持','p4.r1b':'同一角色在镜头序列中的面部与体态特征是否稳定，跨镜比对而非单帧评判','p4.r1c':'失败最显眼，用户会直接判定这条片子不可用',
+      'p4.r2a':'画质稳定性','p4.r2b':'构图、材质、光线与风格在整条序列中是否保持同一套视觉语言','p4.r2c':'决定成片看起来是一条片子还是一堆图',
+      'p4.r3a':'时序一致性','p4.r3b':'镜头之间的动作、视角与场景状态是否连续，有无跳帧式断裂','p4.r3c':'决定片子能否被当作叙事而不是拼贴',
+      'p4.b':'把跑通的组合固化成参数档位，之后新增题材时先调档位而不是从头调参，迭代成本因此显著下降。',
+
+      'sl.5i':'05','sl.5s':'工程化',
+      'p5.h2':'让新能力接入不必重开前端',
+      'p5.a':'AIGC 产品的功能更新频率远高于普通应用。如果每接一个新模型或新玩法都要重做一次界面，产品节奏会被前端排期卡死。',
+      'p5.c1h':'标准化动态表单组件规范','p5.c1p':'把参数输入抽象成一套统一的动态表单组件，统一控件形态、默认值、状态反馈与错误提示。新能力接入时配置字段即可，不需要新增界面开发。',
+      'p5.c2h':'长耗时任务的体验机制','p5.c2p':'生成是分钟级等待，所以设计了生成中与后台运行双模式、任务态流转与结果回捞，并配套预扣款与失败自动退还，在体验与算力成本之间取平衡。',
+
+      'sl.6i':'06','sl.6s':'我负责的部分',
+      'p6.h2':'边界说明',
+      'p6.k1':'完全由我负责','p6.v1':'<b>产品定义与设计</b>　竞品与市场分析、完整需求文档、信息架构与高保真可交互原型、三层提示词架构、动态表单组件规范、计费与任务态机制设计。',
+      'p6.k2':'由我主导','p6.v2':'<b>模型选型与工作流编排</b>　逐个用接口实测候选模型的可用性、参数结构与输出一致性后完成选型；设计并编排画布端工作流，横向对比多套方案并建立三维度评测口径。',
+      'p6.k3':'不由我负责','p6.v3':'<b>工程实现与模型本身</b>　前后端实现由研发完成，模型能力来自外部与平台既有能力。我作为产品侧对接设计与研发，负责排期协调、评审与验收。',
+      'p6.k4':'交付结果','p6.v4':'该应用从 0 到 1，<b>3 周产出可测试版本，1 个月内正式上线</b>。',
+      'p6.close':'这段经历留给我的最具体的东西，是对 AIGC 工具能力边界的判断：哪些画面能稳定复现、哪些效果只在演示里成立、参数调到哪一档会崩，这些不是读文档读来的，是逐个试出来的。',
+      'ft.role':'AI 产品经理'
+    },
+    en: {
+      'tb.name':'Storyboard Node and Canvas Agent Workflow','tb.tag':'Sanitised · Design teardown',
+      'sl.0i':'00','sl.0s':'AIGC creation tool · Product design',
+      'hero.h1':'Turning one sentence into a multi-shot video, where generation was never the hard part',
+      'hero.lede':'This is the storyboard and canvas agent workflow I designed inside an AIGC creation app. One question drove all of it — a good single frame is easy, keeping the person in shot two the same person as in shot one is not. What follows is the three-layer prompt architecture, the workflow orchestration and the consistency rubric I built for it.',
+      'chip.1':'Shot decomposition','chip.2':'Three-layer prompt presets','chip.3':'Canvas agent orchestration','chip.4':'Consistency rubric','chip.5':'Parameter tiers',
+      'notice.ic':'NOTE',
+      'notice.body':'What you see here is the <strong>design prototype</strong> I built to validate the interaction and the prompt-assembly logic; the product went on to full-stack development and launch. The page shows only the design method and decisions that were mine — no real product UI, internal naming, model names or actual parameter values, and all demo data is illustrative.',
+
+      'sl.di':'D','sl.ds':'Prototype · interactive',
+      'pd.h2':'Change one option and watch the three layers reassemble',
+      'pd.a':'Below is the interactive prototype I built to the design of the time. Type a one-line idea, pick style, shot and mood, and the system assembles the three-layer prompt, derives a shot sequence and runs a per-shot consistency verdict. What it demonstrates is the architecture itself — the user speaks plainly, the system produces structure.',
+      'pd.badge':'PROTOTYPE','pd.barnote':'Illustrative data · no live model calls',
+      'pd.lbl':'One-line idea','pd.lstyle':'Style','pd.lshot':'Shot','pd.lmood':'Mood',
+      'pd.p1':'Assembled three-layer prompt','pd.p2':'Shot sequence and consistency verdict',
+      'pd.cap':'The prototype existed to validate the interaction and the prompt-assembly logic; the data shown is illustrative. The product went on to full-stack development and launch — a testable build in 3 weeks, live within a month.',
+      'pd.retry':'failed, regenerate with correction',
+      'st.1':'Photoreal','st.2':'Illustrated','st.3':'Film','st.4':'3D',
+      'sh.1':'Close-up','sh.2':'Medium','sh.3':'Wide','sh.4':'Tracking',
+      'mo.1':'Warm','mo.2':'Tense','mo.3':'Light','mo.4':'Restrained',
+      'pd.idea':'A girl meets a talking cat in a convenience store at midnight',
+      'pd.s1':'Establishing shot, sets place and time','pd.s2':'Subject enters, identity locked','pd.s3':'Key beat, the emotional turn','pd.s4':'Closing shot, space to land',
+      'bd.id':'identity','bd.vis':'visual','bd.tmp':'temporal',
+      'sl.1i':'01','sl.1s':'Problem',
+      'p1.h2':'Three consistency failures decide whether a cut is usable',
+      'p1.a':'The user gives you a sentence and wants something they can post. Generation models have been good enough at the single frame for a while. The trouble starts when shots are cut together — the character changes face, the style drifts from photoreal into illustration, the action in one shot does not follow from the last.',
+      'p1.b':'I split that class of failure into three dimensions that can each be judged separately. The prompt architecture, the workflow and the rubric were all built around them.',
+      'p1.c1h':'Identity retention','p1.c1p':'Whether the same character is still the same person across shots. It is the failure users notice first and forgive least.',
+      'p1.c2h':'Visual stability','p1.c2p':'Whether composition, material, light and style hold one visual language across the whole piece instead of drifting mid-way.',
+      'p1.c3h':'Temporal consistency','p1.c3p':'Whether action, viewpoint and scene state carry across cuts without jump-cut breakage.',
+
+      'sl.2i':'02','sl.2s':'Prompt architecture',
+      'p2.h2':'Turning prompting from a personal skill into product surface',
+      'p2.a':'A creator should not have to learn prompt syntax to get one image. So instead of handing users a text box, I let them choose style, shot and mood in plain language and had the system assemble a three-layer structured prompt. Users get reliable output writing zero prompts, and the prompts themselves become a maintainable, versionable product asset.',
+      'p2.l1h':'Positive layer','p2.l1p':'What you want. Mapped from the user selections and bound to identity anchor information, so the same character carries the same descriptors from shot to shot.',
+      'p2.l2h':'Negative layer','p2.l2p':'What you do not want. This is where hard-won knowledge gets frozen — known failure shapes, proportion collapse, style contamination. Users never see it and it applies on every generation.',
+      'p2.l3h':'Parameter layer','p2.l3p':'How it renders. Sampler, steps, weights and ratio, filed into tiers by scenario rather than hand-tuned each time.',
+      'p2.ex':'user_selection  →  style · shot · mood\n                  ↓\npositive   = subject + identity_anchor + style_tokens\nnegative   = failure_patterns + style_contamination\nparameters = sampler + steps + weights + ratio  (by tier)',
+      'p2.b':'The real return is not single-shot quality, it is maintainability. When a class of breakage shows up, you fix one rule in the negative layer instead of leaving every user to rediscover it.',
+
+      'sl.3i':'03','sl.3s':'Orchestration',
+      'p3.h2':'One main path and one fallback path on the canvas',
+      'p3.a':'I laid the storyboard-to-cut process out on the canvas as an explicit workflow. What separates it from one-shot generation is ordering — identity anchoring happens before per-shot generation, and the consistency check happens before compositing. A failed check falls back and regenerates rather than leaving the user to retry blindly.',
+      'p3.alt':'Workflow diagram: creative input flows through shot decomposition, identity anchoring, per-shot generation and a consistency check, then composites out, or falls back to regeneration when the check fails',
+      'nd.1t':'Creative input','nd.1s':'one line / choices',
+      'nd.2t':'Shot decomposition','nd.2s':'into a shot list',
+      'nd.3t':'Identity anchoring','nd.3s':'lock character traits',
+      'nd.4t':'Per-shot generation','nd.4s':'three-layer prompt applied',
+      'nd.5t':'Consistency check','nd.5s':'three dimensions, per shot',
+      'nd.6t':'Composite out','nd.6s':'final cut',
+      'nd.7t':'Locate the failure','nd.7s':'identity, visual or temporal',
+      'nd.fail':'fails','nd.loop':'regenerate with correction',
+      'p3.cap':'Illustrative diagram of the orchestration logic and fallback path. It does not represent actual node naming or implementation.',
+
+      'sl.4i':'04','sl.4s':'Rubric',
+      'p4.h2':'Comparing workflows requires defining good first',
+      'p4.a':'More than one workflow runs on the canvas, and you cannot pick between them by eyeballing a few frames. I defined how each of the three consistency dimensions is judged, so competing orchestrations could be measured on one scale and reused across iterations.',
+      'p4.th1':'Dimension','p4.th2':'What is judged','p4.th3':'Why it matters',
+      'p4.r1a':'Identity retention','p4.r1b':'Whether facial and body traits of one character stay stable across the shot sequence, compared across shots rather than judged per frame','p4.r1c':'The most visible failure — users write the whole cut off',
+      'p4.r2a':'Visual stability','p4.r2b':'Whether composition, material, light and style hold one visual language across the sequence','p4.r2c':'Decides whether it reads as a film or as a pile of images',
+      'p4.r3a':'Temporal consistency','p4.r3b':'Whether action, viewpoint and scene state carry across cuts without jump-cut breakage','p4.r3c':'Decides whether it reads as narrative or as collage',
+      'p4.b':'Combinations that passed were frozen into parameter tiers, so a new subject starts from a tier rather than from scratch. Iteration cost dropped noticeably as a result.',
+
+      'sl.5i':'05','sl.5s':'Engineering',
+      'p5.h2':'New capabilities should not need new front-end work',
+      'p5.a':'AIGC products change far faster than ordinary apps. If every new model or mechanic needs its own interface build, product pace gets pinned to front-end scheduling.',
+      'p5.c1h':'A dynamic form-component spec','p5.c1p':'Parameter input abstracted into one standard component set with unified control shapes, defaults, state feedback and error messaging. Onboarding a new capability means configuring fields, not building a screen.',
+      'p5.c2h':'Mechanics for long-running inference','p5.c2p':'Generation is a minutes-long wait, so I designed foreground and background execution, task-state transitions and result recovery, with pre-authorised charge and automatic refund on failure to balance experience against compute cost.',
+
+      'sl.6i':'06','sl.6s':'What was mine',
+      'p6.h2':'Scope, stated plainly',
+      'p6.k1':'Entirely mine','p6.v1':'<b>Product definition and design</b>　Competitive and market teardown, the full PRD, information architecture and high-fidelity interactive prototype, the three-layer prompt architecture, the dynamic form-component spec, and the billing and task-state mechanics.',
+      'p6.k2':'Led by me','p6.v2':'<b>Model selection and workflow orchestration</b>　Tested each candidate model API myself for availability, parameter structure and output consistency before selecting; designed and orchestrated the canvas workflow, compared several approaches and built the three-dimension rubric.',
+      'p6.k3':'Not mine','p6.v3':'<b>Implementation and the models</b>　Front and back end were built by engineering, and model capability came from external and existing platform capability. I worked the product side with design and engineering on scheduling, review and acceptance.',
+      'p6.k4':'Outcome','p6.v4':'The app went from zero to launch with a <b>testable build in 3 weeks and live within a month</b>.',
+      'p6.close':'What this left me with, concretely, is a sense of where AIGC tooling actually stops — which frames reproduce reliably, which effects only hold up in a demo, and which parameter tier is the one that breaks. None of that came from documentation. I tested it one at a time.',
+      'ft.role':'AI Product Manager'
+    }
+  };
+
+  var DOCTITLE = { zh:'分镜脚本节点与画布 Agent 工作流', en:'Storyboard Node and Canvas Agent Workflow' };
+  var lang = 'zh';
+  function t(k){ return (T[lang] && T[lang][k]) || T.en[k] || ''; }
+
+
+  var SEGS = {
+    style: ['st.1','st.2','st.3','st.4'],
+    shot:  ['sh.1','sh.2','sh.3','sh.4'],
+    mood:  ['mo.1','mo.2','mo.3','mo.4']
+  };
+  var TOK = {
+    'st.1':'photoreal, natural skin, shallow depth of field',
+    'st.2':'illustrated, clean linework, flat shading',
+    'st.3':'35mm film grain, halation, muted palette',
+    'st.4':'3d render, soft global illumination, subsurface',
+    'sh.1':'close-up, 85mm, eye level',
+    'sh.2':'medium shot, 50mm, chest framing',
+    'sh.3':'wide shot, 24mm, full environment',
+    'sh.4':'tracking shot, handheld, motion blur',
+    'mo.1':'warm key light, amber practicals',
+    'mo.2':'low key, hard shadows, cool cast',
+    'mo.3':'high key, soft bounce, airy',
+    'mo.4':'even light, low contrast, desaturated'
+  };
+  var PICK = { style:'st.1', shot:'sh.2', mood:'mo.1' };
+  var VERDICT = [
+    { id:true,  vis:true,  tmp:true  },
+    { id:true,  vis:true,  tmp:true  },
+    { id:false, vis:true,  tmp:true  },
+    { id:true,  vis:true,  tmp:true  }
+  ];
+
+  function esc(x){ return String(x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+  function buildSegs(){
+    ['style','shot','mood'].forEach(function(g){
+      var el = document.getElementById('seg-' + g);
+      if (!el) return;
+      el.innerHTML = SEGS[g].map(function(k){
+        return '<button type="button" data-g="' + g + '" data-k="' + k + '" aria-pressed="' + (PICK[g]===k) + '">' + esc(t(k)) + '</button>';
+      }).join('');
+    });
+  }
+
+  function renderDemo(){
+    var ideaEl = document.getElementById('idea');
+    if (!ideaEl) return;
+    var idea = ideaEl.value.trim() || t('pd.idea');
+    var st = TOK[PICK.style], sh = TOK[PICK.shot], mo = TOK[PICK.mood];
+    document.getElementById('out-prompt').innerHTML =
+      '<span class="kk">positive</span>   = ' + esc(idea) + ', identity_anchor, ' + esc(st) + ', ' + esc(sh) + ', ' + esc(mo) + '\n\n'
+      + '<span class="kk">negative</span>   = extra fingers, warped proportions, style contamination,\n              inconsistent face, duplicated subject\n\n'
+      + '<span class="kk">parameters</span> = sampler=tier_' + (PICK.style.slice(-1)) + ' · steps=preset · weights=locked · ratio=9:16';
+
+    var shots = ['pd.s1','pd.s2','pd.s3','pd.s4'];
+    document.getElementById('out-shots').innerHTML = shots.map(function(k, i){
+      var v = VERDICT[i];
+      function b(ok, lab){ return '<span class="bdg ' + (ok?'ok':'no') + '">' + (ok?'✓':'✕') + ' ' + esc(t(lab)) + '</span>'; }
+      return '<div class="shot"><div class="sn">SHOT 0' + (i+1) + ' · ' + esc(t(PICK.shot)) + '</div>'
+        + '<div class="sd">' + esc(t(k)) + '</div>'
+        + '<div class="bs">' + b(v.id,'bd.id') + b(v.vis,'bd.vis') + b(v.tmp,'bd.tmp') + '</div>'
+        + (v.id && v.vis && v.tmp ? '' : '<div class="retry">↺ ' + esc(t('pd.retry')) + '</div>')
+        + '</div>';
+    }).join('');
+  }
+
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('.seg button[data-g]');
+    if (!b) return;
+    PICK[b.getAttribute('data-g')] = b.getAttribute('data-k');
+    buildSegs(); renderDemo();
+  });
+  (function(){
+    var i = document.getElementById('idea');
+    if (i) i.addEventListener('input', function(){ i.dataset.touched = '1'; renderDemo(); });
+  })();
+
+  function render(){
+    document.documentElement.lang = (lang === 'zh' ? 'zh-CN' : 'en');
+    try { document.title = DOCTITLE[lang]; } catch(e){}
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function(el){
+      var v = t(el.getAttribute('data-i18n'));
+      if (el.namespaceURI && el.namespaceURI.indexOf('svg') !== -1) el.textContent = v;
+      else el.innerHTML = v;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-attr]'), function(el){
+      var p = el.getAttribute('data-i18n-attr').split('|');
+      el.setAttribute(p[0], t(p[1]));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('#lang button'), function(b){
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === lang));
+    });
+    var ie = document.getElementById('idea');
+    if (ie) { ie.placeholder = t('pd.idea'); if (!ie.dataset.touched) ie.value = t('pd.idea'); }
+    buildSegs(); renderDemo();
+  }
+
+  document.getElementById('lang').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-lang]');
+    if (!b) return;
+    lang = b.getAttribute('data-lang');
+    try { localStorage.setItem('sbn.lang', lang); } catch(e2){}
+    render();
+  });
+
+  var saved = null;
+  try { saved = localStorage.getItem('sbn.lang'); } catch(e){}
+  if (saved === 'zh' || saved === 'en') lang = saved;
+  else lang = (navigator.language || '').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+
+  render();
+})();
+</script>
+
+</body></html>

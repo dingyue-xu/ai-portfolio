@@ -1,0 +1,464 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>脚本看板 UI · 三方案对比</title>
+<style>
+  :root {
+    --bg: #f4f4f2;
+    --surface: #ffffff;
+    --ink: #1c1d1f;
+    --ink-2: #5c5e63;
+    --ink-3: #8b8d92;
+    --line: #e2e2de;
+    --accent: #a06b2a;
+    --accent-soft: #f0e5d4;
+    --mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131416;
+      --surface: #1b1c1f;
+      --ink: #e8e8e6;
+      --ink-2: #a3a5aa;
+      --ink-3: #6f7176;
+      --line: #2a2b2f;
+      --accent: #d9a441;
+      --accent-soft: #2c2417;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131416; --surface: #1b1c1f; --ink: #e8e8e6; --ink-2: #a3a5aa;
+    --ink-3: #6f7176; --line: #2a2b2f; --accent: #d9a441; --accent-soft: #2c2417;
+  }
+  :root[data-theme="light"] {
+    --bg: #f4f4f2; --surface: #ffffff; --ink: #1c1d1f; --ink-2: #5c5e63;
+    --ink-3: #8b8d92; --line: #e2e2de; --accent: #a06b2a; --accent-soft: #f0e5d4;
+  }
+  html { background: var(--bg); }
+  body {
+    margin: 0;
+    color: var(--ink);
+    font: 15px/1.75 -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 48px 28px 96px; }
+
+  header.masthead { margin-bottom: 40px; }
+  .eyebrow {
+    font: 600 11px/1 var(--mono);
+    letter-spacing: .14em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  h1 {
+    font-size: 30px; line-height: 1.3; margin: 0 0 12px;
+    font-weight: 700; letter-spacing: .01em; text-wrap: balance;
+  }
+  .lede { color: var(--ink-2); max-width: 42em; margin: 0; }
+
+  .diagnosis {
+    margin: 28px 0 0; padding: 18px 22px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  }
+  .diagnosis b { font-size: 13px; letter-spacing: .06em; color: var(--ink-3); font-weight: 600; }
+  .diagnosis ul { margin: 8px 0 0; padding-left: 1.2em; color: var(--ink-2); font-size: 13.5px; }
+  .diagnosis li { margin: 2px 0; }
+
+  section.scheme { margin-top: 64px; }
+  .scheme-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .scheme-tag {
+    font: 700 13px/1 var(--mono); color: var(--bg);
+    background: var(--ink); padding: 6px 9px; border-radius: 4px;
+  }
+  h2 { font-size: 21px; margin: 0; font-weight: 700; }
+  .scheme-sub { color: var(--ink-3); font-size: 13.5px; }
+  .points {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 10px 22px; margin: 18px 0 20px; padding: 0; list-style: none;
+    color: var(--ink-2); font-size: 13.5px;
+  }
+  .points li { padding-left: 16px; position: relative; }
+  .points li::before {
+    content: ""; position: absolute; left: 0; top: .62em;
+    width: 7px; height: 2px; background: var(--accent);
+  }
+  .points b { color: var(--ink); font-weight: 600; }
+
+  .stage {
+    border: 1px solid var(--line); border-radius: 10px;
+    background: #0d0e10; overflow-x: auto; padding: 26px 22px;
+  }
+  .stage-note {
+    margin: 10px 2px 0; color: var(--ink-3); font-size: 12.5px;
+  }
+  .tradeoff {
+    margin-top: 14px; padding: 12px 16px; border-left: 3px solid var(--accent);
+    background: var(--accent-soft); border-radius: 0 6px 6px 0;
+    font-size: 13.5px; color: var(--ink-2);
+  }
+  .tradeoff b { color: var(--ink); }
+
+  /* ===================== mockup 公共（固定深色，即产品本身） ===================== */
+  .mock { min-width: 1340px; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .mock, .mock * { box-sizing: border-box; }
+  .mock .at { border-radius: 3px; padding: 0 5px; font-size: 10.5px; display: inline-block; line-height: 1.55; }
+
+  /* ---------- 方案 A：SLATE ---------- */
+  .mA { color: #c9ccd1; }
+  .mA .plot {
+    display: flex; gap: 10px; align-items: baseline; margin-bottom: 10px;
+    font-size: 11.5px; color: #9ba0a8;
+  }
+  .mA .plot .pno { font: 700 11px var(--mono); color: #e8eaed; background: #23252a; padding: 2px 7px; border-radius: 3px; }
+  .mA .row {
+    display: grid; grid-template-columns: 92px 150px 130px 180px 240px 200px 150px 190px;
+    background: #141518; border-radius: 8px; overflow: hidden;
+    border-left: 2px solid #e8eaed;
+  }
+  .mA .cell { padding: 12px 12px 14px; border-right: 1px solid rgba(255,255,255,.05); min-width: 0; }
+  .mA .cell:last-child { border-right: 0; }
+  .mA .zone {
+    font-size: 9.5px; font-weight: 600; letter-spacing: .09em;
+    color: #6d7178; margin-bottom: 8px;
+  }
+  .mA .fl { font-size: 9px; color: #55585e; margin: 8px 0 2px; letter-spacing: .04em; }
+  .mA .fl:first-of-type { margin-top: 0; }
+  .mA .tx { font-size: 11px; line-height: 1.6; color: #c9ccd1; }
+  .mA .shot-no { font: 600 17px var(--mono); color: #e8eaed; letter-spacing: .02em; }
+  .mA .badge {
+    display: inline-block; font-size: 9.5px; color: #9ba0a8;
+    border: 1px solid rgba(255,255,255,.1); border-radius: 3px; padding: 1px 6px; margin: 6px 4px 0 0;
+  }
+  .mA .dirty { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #d9a441; margin-left: 6px; vertical-align: 2px; }
+  .mA .at { background: #1d1f23; color: #d5d8dc; margin: 0 3px 3px 0; }
+  .mA .at.c { box-shadow: inset 2px 0 0 #5aa8a0; }
+  .mA .at.s { box-shadow: inset 2px 0 0 #b3925e; }
+  .mA .at.p { box-shadow: inset 2px 0 0 #8b7fb8; }
+  .mA .ghost {
+    display: inline-block; font-size: 10px; color: #9ba0a8;
+    border: 1px solid rgba(255,255,255,.14); background: transparent;
+    border-radius: 4px; padding: 3px 9px; margin: 2px 6px 2px 0;
+  }
+  .mA .voice { font-size: 10.5px; color: #c9ccd1; }
+  .mA .voice .on { color: #5aa8a0; }
+  .mA .ro { opacity: .5; border-right: 0; border-left: 1px dashed rgba(255,255,255,.12); }
+  .mA .ro .tx { font-size: 10px; }
+
+  /* ---------- 方案 B：TIMELINE ---------- */
+  .mB { color: #c6c9ce; }
+  .mB .cols {
+    display: grid; grid-template-columns: 64px 170px 140px 195px 250px 205px 150px 166px;
+    font-size: 9.5px; font-weight: 600; letter-spacing: .09em; color: #787c83;
+    padding: 0 0 8px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 0;
+  }
+  .mB .cols span { padding: 0 10px; }
+  .mB .plotband {
+    display: flex; gap: 10px; align-items: baseline;
+    margin: 12px 0 0; padding: 7px 10px 7px 8px;
+    background: rgba(90,140,160,.07); border-left: 3px solid #4e7d8c; border-radius: 0 4px 4px 0;
+    font-size: 11px; color: #a8adb5;
+  }
+  .mB .plotband .pno { font: 700 10.5px var(--mono); color: #cfd3d9; }
+  .mB .trk {
+    display: grid; grid-template-columns: 64px 170px 140px 195px 250px 205px 150px 166px;
+    border-bottom: 1px solid rgba(255,255,255,.05); background: #121316;
+  }
+  .mB .trk:hover { background: #17181c; }
+  .mB .tcell { padding: 11px 10px 13px; min-width: 0; }
+  .mB .thead {
+    background: #0e0f12; display: flex; flex-direction: column; gap: 4px;
+    align-items: flex-start; padding: 11px 10px; border-right: 1px solid rgba(255,255,255,.07);
+  }
+  .mB .thead .no { font: 600 15px var(--mono); color: #e5e7ea; }
+  .mB .thead .dur { font: 500 10px var(--mono); color: #787c83; }
+  .mB .lamp { width: 7px; height: 7px; border-radius: 50%; margin-top: 2px; }
+  .mB .lamp.warn { background: #d9a441; box-shadow: 0 0 6px rgba(217,164,65,.5); }
+  .mB .pre { color: #6d7178; font-size: 10px; }
+  .mB .tx { font-size: 11px; line-height: 1.58; }
+  .mB .at { padding: 0 1px; background: none; border-bottom: 1px dotted; }
+  .mB .at.c { color: #7fc4bc; border-color: rgba(127,196,188,.5); }
+  .mB .at.s { color: #cfa96e; border-color: rgba(207,169,110,.5); }
+  .mB .at.p { color: #a89bd8; }
+  .mB .at.p { color: #a99fd6; border-color: rgba(169,159,214,.5); }
+  .mB .ghost {
+    display: inline-block; font-size: 10px; color: #8f939b;
+    border: 1px solid rgba(255,255,255,.13); border-radius: 3px; padding: 2px 8px; margin: 4px 5px 0 0;
+  }
+  .mB .ro { opacity: .48; }
+  .mB .ro .tx { font-size: 10px; }
+
+  /* ---------- 方案 C：DOSSIER ---------- */
+  .mC { color: #caccd1; }
+  .mC .card {
+    position: relative; background: #17181c; border-radius: 10px;
+    padding: 16px 18px; display: grid; grid-template-columns: 118px 1fr 300px; gap: 20px;
+    box-shadow: 0 1px 0 rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.045);
+  }
+  .mC .tools {
+    position: absolute; top: 10px; right: 12px; display: flex; gap: 6px;
+  }
+  .mC .tools span {
+    font-size: 10px; color: #9ba0a8; background: #202227;
+    border-radius: 4px; padding: 3px 9px;
+  }
+  .mC .meta { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .mC .meta .no { font: 600 20px var(--mono); color: #e8eaed; }
+  .mC .meta .dur { font: 500 10.5px var(--mono); color: #787c83; }
+  .mC .meta .tone { font-size: 10px; color: #9ba0a8; border: 1px solid rgba(255,255,255,.1); padding: 1px 7px; border-radius: 10px; }
+  .mC .meta .state { font-size: 10px; color: #d9a441; }
+  .mC .plotline { font-size: 11px; color: #a8adb5; margin-bottom: 10px; }
+  .mC .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 22px; }
+  .mC .fld { font-size: 11px; line-height: 1.62; margin: 0 0 6px; }
+  .mC .lab {
+    display: inline-block; font-size: 9px; color: #8f939b; background: #202227;
+    border-radius: 3px; padding: 1px 6px; margin-right: 6px; vertical-align: 1px;
+  }
+  .mC .at { background: #1f2126; margin: 0 2px; }
+  .mC .at.c { color: #7fc4bc; }
+  .mC .at.s { color: #cfa96e; }
+  .mC .at.p { color: #a99fd6; }
+  .mC .side { border-left: 1px solid rgba(255,255,255,.06); padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+  .mC .side .fld { margin: 0; }
+  .mC .fold {
+    font-size: 10.5px; color: #787c83; background: #131418;
+    border: 1px dashed rgba(255,255,255,.1); border-radius: 5px; padding: 6px 10px;
+  }
+  .mC .fold b { color: #9ba0a8; font-weight: 500; }
+
+  /* ===================== 对比表 ===================== */
+  .compare { margin-top: 72px; }
+  .compare h2 { margin-bottom: 16px; }
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; background: var(--surface); font-size: 13.5px; }
+  th, td { padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--line); }
+  th { font-size: 11px; letter-spacing: .08em; color: var(--ink-3); font-weight: 600; }
+  td:first-child { color: var(--ink-2); white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  .hi { color: var(--accent); font-weight: 600; }
+
+  .verdict {
+    margin-top: 28px; padding: 20px 24px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  }
+  .verdict .eyebrow { margin-bottom: 8px; }
+  .verdict p { margin: 6px 0; color: var(--ink-2); font-size: 14px; }
+  .verdict b { color: var(--ink); }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow">Design Review · 脚本编辑看板</div>
+    <h1>看板 UI 美化 · 三方案对比</h1>
+    <p class="lede">每个方案都用 S04 分镜的真实数据做了单行高保真 mockup（深色区域即产品实际效果，可横向滚动）。三案共享同一套硬约束：八分区结构不变、@实体保留 chip 语义、深色主题、画布缩小后仍可辨。</p>
+    <div class="diagnosis">
+      <b>现状诊断</b>
+      <ul>
+        <li>「画面描述 / 色彩基调 / 光影氛围」等小标题每行重复出现，是最大的视觉噪音源</li>
+        <li>层级全靠字号硬撑，分区标题、字段标题、正文三级界限模糊</li>
+        <li>绿色实体 chip 与青绿按钮散落各处，黑底上过跳，缺乏收敛的语义色系统</li>
+        <li>右侧只读占位列与可编辑区视觉权重相同；行状态（已改未重生成）无引导</li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- ================= 方案 A ================= -->
+  <section class="scheme">
+    <div class="scheme-head">
+      <span class="scheme-tag">A</span>
+      <h2>Slate · 灰阶分层精修</h2>
+      <span class="scheme-sub">结构零改动，纯视觉治理 —— 落地成本最低</span>
+    </div>
+    <ul class="points">
+      <li><b>三级层级重建</b>：分区标题改 9.5px 加宽字距灰标，字段标题降为极小灰注，正文亮度提高</li>
+      <li><b>语义色收敛</b>：chip 统一深灰底，仅左缘 2px 色相条区分角色 / 场景 / 道具（低饱和青 / 琥珀 / 紫）</li>
+      <li><b>只读列弱化</b>：55% 透明度 + 虚线分隔，不再与创作区抢权重</li>
+      <li><b>状态引导</b>：行左缘白条 = 选中；镜号旁琥珀点 = 已修改待重新生成；按钮全部幽灵化</li>
+    </ul>
+    <div class="stage">
+      <div class="mock mA">
+        <div class="plot"><span class="pno">P02</span><span>@林茵 进入@村委会，在陈旧档案柜中翻找，找出@旧地图。</span></div>
+        <div class="row">
+          <div class="cell">
+            <div class="shot-no">S04<span class="dirty"></span></div>
+            <span class="badge">5s</span><span class="badge">暗黄调</span>
+            <div class="fl" style="margin-top:10px">待生成故事板</div>
+          </div>
+          <div class="cell">
+            <div class="zone">剧情区</div>
+            <div class="tx">@林茵 进入@村委会，在陈旧档案柜中翻找，找出@旧地图。</div>
+            <span class="ghost">✎ 编辑剧情</span>
+          </div>
+          <div class="cell">
+            <div class="zone">资产区</div>
+            <span class="at c">@林茵</span><span class="at s">@村委会</span><span class="at p">@旧地图</span>
+            <div style="margin-top:8px"><span class="ghost">✎ 编辑资产</span></div>
+          </div>
+          <div class="cell">
+            <div class="zone">空间设计区</div>
+            <div class="fl">角色走位</div>
+            <div class="tx">【起点】@林茵 位于@村委会 门外1米【路线】推门入内，走近档案柜2米【终点】停在柜前</div>
+            <span class="ghost">✎ 编辑走位</span>
+          </div>
+          <div class="cell">
+            <div class="zone">画面设计区</div>
+            <div class="fl">画面描述</div>
+            <div class="tx">0-5s 子镜头1【构图】@村委会 门被推开，@林茵 站在门口逆光剪影【景别与机位】中景、侧面【运镜】固定</div>
+            <div class="fl">色彩基调</div>
+            <div class="tx">暗黄调，低饱和度，偏褐色</div>
+            <div class="fl">光影氛围</div>
+            <div class="tx">室内昏暗，仅从窗户透入微弱天光，柴油灯侧光</div>
+            <div style="margin-top:8px"><span class="ghost">🎞 取景器</span><span class="ghost">◎ 罗盘</span></div>
+          </div>
+          <div class="cell">
+            <div class="zone">表演设计区</div>
+            <div class="fl">表演基调</div>
+            <div class="tx">动作谨慎，眼神锐利扫视，呼吸平稳</div>
+            <div class="fl">叙事节拍</div>
+            <div class="tx">情节铺垫</div>
+            <div style="margin-top:8px"><span class="ghost">＋ 表演 · 情绪</span></div>
+          </div>
+          <div class="cell">
+            <div class="zone">听觉设计区</div>
+            <div class="voice"><span class="on">●</span> 林茵 · 温柔姐姐</div>
+            <div class="fl">音效</div>
+            <div class="tx">门吱呀声，脚步声，灰尘飞扬</div>
+          </div>
+          <div class="cell ro">
+            <div class="zone">占位（不可编辑）</div>
+            <div class="fl">分镜图提示词</div>
+            <div class="tx">【场景名称】@村委会【场景1描述】陈旧@村委会办公室，室内…</div>
+            <div class="fl">分镜视频提示词</div>
+            <div class="tx">【时长】5【叙事节拍】情节铺垫…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="stage-note">S04 单行 mockup · 左缘白条为选中态，镜号旁琥珀点为「已修改待重新生成」</p>
+    <div class="tradeoff"><b>取舍</b>：重复小标题仍在（仅弱化未消除）；胜在结构零改动，现有 CSS 上一天内可落地，回归风险最小。</div>
+  </section>
+
+  <!-- ================= 方案 B ================= -->
+  <section class="scheme">
+    <div class="scheme-head">
+      <span class="scheme-tag">B</span>
+      <h2>Timeline · 轨道视图</h2>
+      <span class="scheme-sub">列头上提一次出现，行内彻底去重 —— 信息密度收益最大</span>
+    </div>
+    <ul class="points">
+      <li><b>列头上提</b>：八分区标题合并为表头一次出现（sticky），行内不再逐行重复</li>
+      <li><b>轨道头</b>：镜号列压缩成剪辑软件式 track head —— 镜号 + 时长 + 状态灯（绿已生成 / 琥珀已修改 / 灰待生成）</li>
+      <li><b>行内前缀</b>：字段小标题改为「画面 ·」「色彩 ·」灰色前缀融进正文首行，纵向空间省约 30%</li>
+      <li><b>剧情段色带</b>：P01 / P02 做贯穿横条，青灰色相条 + 段描述，行挂段下</li>
+      <li><b>chip 极简化</b>：@实体去底色，色相文字 + 点状下划线，正文密度下噪音最低</li>
+    </ul>
+    <div class="stage">
+      <div class="mock mB">
+        <div class="cols"><span>镜号</span><span>剧情区</span><span>资产区</span><span>空间设计区</span><span>画面设计区</span><span>表演设计区</span><span>听觉设计区</span><span>占位（只读）</span></div>
+        <div class="plotband"><span class="pno">P02</span><span>@林茵 进入@村委会，在陈旧档案柜中翻找，找出@旧地图。 · 分镜连续性：从推门进入到翻找找出，动作连贯</span></div>
+        <div class="trk">
+          <div class="thead"><span class="no">S04</span><span class="dur">5s</span><span class="lamp warn"></span></div>
+          <div class="tcell">
+            <div class="tx">@林茵 进入@村委会，在陈旧档案柜中翻找，找出@旧地图。</div>
+            <span class="ghost">✎ 剧情</span>
+          </div>
+          <div class="tcell">
+            <div class="tx"><span class="at c">@林茵</span> <span class="at s">@村委会</span> <span class="at p">@旧地图</span></div>
+            <span class="ghost">✎ 资产</span>
+          </div>
+          <div class="tcell">
+            <div class="tx"><span class="pre">走位 · </span>【起点】@林茵 位于@村委会 门外1米【路线】推门入内走近档案柜2米【终点】停在柜前</div>
+            <span class="ghost">✎ 走位</span>
+          </div>
+          <div class="tcell">
+            <div class="tx"><span class="pre">画面 · </span>0-5s 子镜头1【构图】@村委会 门被推开，@林茵 逆光剪影【景别与机位】中景、侧面【运镜】固定</div>
+            <div class="tx"><span class="pre">色彩 · </span>暗黄调，低饱和，偏褐色</div>
+            <div class="tx"><span class="pre">光影 · </span>室内昏暗，窗光微弱，柴油灯侧光</div>
+            <span class="ghost">🎞 取景器</span><span class="ghost">◎ 罗盘</span>
+          </div>
+          <div class="tcell">
+            <div class="tx"><span class="pre">基调 · </span>动作谨慎，眼神锐利扫视，呼吸平稳</div>
+            <div class="tx"><span class="pre">节拍 · </span>情节铺垫</div>
+            <span class="ghost">＋ 情绪</span>
+          </div>
+          <div class="tcell">
+            <div class="tx" style="color:#7fc4bc">● 林茵 · 温柔姐姐</div>
+            <div class="tx"><span class="pre">音效 · </span>门吱呀声，脚步声，灰尘飞扬</div>
+          </div>
+          <div class="tcell ro">
+            <div class="tx">【场景名称】@村委会 陈旧办公室…</div>
+            <div class="tx">【时长】5【叙事节拍】情节铺垫…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="stage-note">表头 sticky 常驻，滚动 11 行时始终可见；状态灯替代文字型「待生成故事板」徽标</p>
+    <div class="tradeoff"><b>取舍</b>：需要小幅结构改动（分区标题从行内上提为表头）；单屏可见行数最多，但正文密度高，依赖行高与前缀灰度控制呼吸感。</div>
+  </section>
+
+  <!-- ================= 方案 C ================= -->
+  <section class="scheme">
+    <div class="scheme-head">
+      <span class="scheme-tag">C</span>
+      <h2>Dossier · 档案卡</h2>
+      <span class="scheme-sub">每镜一张横向档案卡，留白最充分 —— 阅读体验最好</span>
+    </div>
+    <ul class="points">
+      <li><b>卡片化</b>：行变独立圆角卡，卡间 14px 空隙，剧情段作为卡组标题存在</li>
+      <li><b>三栏重组</b>：元信息栏（镜号大字 + 状态）/ 创作主栏（画面 + 表演 + 空间两列排布）/ 声音 + 占位窄栏</li>
+      <li><b>标签芯片化</b>：字段小标题变 9px 深灰 label-chip 行内前缀，正文同行起排</li>
+      <li><b>操作悬浮化</b>：✎ 编辑入口收进卡右上 hover 工具条，静止时零按钮噪音</li>
+      <li><b>占位折叠</b>：只读提示词折叠为单行摘要，hover / 点击展开全文</li>
+    </ul>
+    <div class="stage">
+      <div class="mock mC">
+        <div class="card">
+          <div class="tools"><span>✎ 剧情</span><span>✎ 资产</span><span>✎ 走位</span><span>🎞 取景器</span><span>＋ 情绪</span></div>
+          <div class="meta">
+            <span class="no">S04</span>
+            <span class="dur">5s · P02</span>
+            <span class="tone">暗黄调 · 低饱和</span>
+            <span class="state">● 已修改待重生成</span>
+          </div>
+          <div>
+            <div class="plotline">@林茵 进入@村委会，在陈旧档案柜中翻找，找出<span class="at p">@旧地图</span>。</div>
+            <div class="grid2">
+              <p class="fld"><span class="lab">画面</span>0-5s 子镜头1【构图】<span class="at s">@村委会</span> 门被推开，<span class="at c">@林茵</span> 站在门口逆光剪影【景别与机位】中景、侧面【运镜】固定</p>
+              <p class="fld"><span class="lab">走位</span>【起点】门外1米【路线】推门入内，走近档案柜2米【终点】停在柜前</p>
+              <p class="fld"><span class="lab">色彩</span>暗黄调，低饱和度，偏褐色 <span class="lab" style="margin-left:10px">光影</span>室内昏暗，窗光微弱，柴油灯侧光</p>
+              <p class="fld"><span class="lab">表演</span>动作谨慎，眼神锐利扫视，呼吸平稳 <span class="lab" style="margin-left:10px">节拍</span>情节铺垫</p>
+            </div>
+          </div>
+          <div class="side">
+            <p class="fld" style="color:#7fc4bc">● 林茵 · 温柔姐姐</p>
+            <p class="fld"><span class="lab">音效</span>门吱呀声，脚步声，灰尘飞扬</p>
+            <div class="fold"><b>分镜图提示词</b> · 【场景名称】@村委会… <span style="float:right">▸</span></div>
+            <div class="fold"><b>分镜视频提示词</b> · 【时长】5… <span style="float:right">▸</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="stage-note">编辑工具条为 hover 态（mockup 中常显示意）；占位提示词默认折叠</p>
+    <div class="tradeoff"><b>取舍</b>：观感最高级但改动最大；hover 依赖强 —— 画布 LOD 缩小时工具条与折叠摘要的可达性需要额外设计，单屏可见行数最少。</div>
+  </section>
+
+  <!-- ================= 对比 ================= -->
+  <section class="compare">
+    <h2>横向对比</h2>
+    <div class="tbl-wrap">
+      <table>
+        <tr><th>维度</th><th>A · Slate</th><th>B · Timeline</th><th>C · Dossier</th></tr>
+        <tr><td>结构改动</td><td class="hi">零（纯 CSS）</td><td>小（列头上提）</td><td>大（三栏重组）</td></tr>
+        <tr><td>重复小标题治理</td><td>弱化保留</td><td class="hi">彻底消除</td><td>芯片化压缩</td></tr>
+        <tr><td>单屏可见行数</td><td>≈ 现状</td><td class="hi">最多</td><td>最少</td></tr>
+        <tr><td>画布缩小可辨性</td><td class="hi">好</td><td class="hi">好（状态灯）</td><td>中（依赖 hover）</td></tr>
+        <tr><td>开发成本</td><td class="hi">约 1 天</td><td>2–3 天</td><td>4–5 天</td></tr>
+        <tr><td>回归风险</td><td class="hi">最低</td><td>中（文本断言测试需同步）</td><td>较高</td></tr>
+      </table>
+    </div>
+    <div class="verdict">
+      <div class="eyebrow">推荐</div>
+      <p><b>A + B 混合</b>：以 A 的灰阶分层与语义色系统为视觉基底（低风险打底），叠加 B 的「列头上提 + 行内前缀」—— 它直击最大噪音源（逐行重复的小标题），两者合计 2–3 天可落地，且都不动八分区数据结构。</p>
+      <p>C 的「占位折叠」「hover 工具条」可作为二期增量单独引入，不必绑定整个卡片化改版。</p>
+    </div>
+  </section>
+</div>
+
+</body></html>

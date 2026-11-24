@@ -1,0 +1,466 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>政枢办文工作台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: 顶部状态机步骤条 + 左侧工作区（随步骤切换）+ 右侧智能体运行日志；窄屏上下堆叠 */
+:root{
+  --bg:#EEF1F5; --surface:#FFFFFF; --sunk:#F6F8FA; --ink:#17202B; --muted:#596476; --line:#D7DDE5;
+  --seal:#B42318; --seal-soft:#FCE9E7; --navy:#1E3A5F; --navy-soft:#E6EDF6;
+  --ok:#1D7A4A; --ok-soft:#E3F3EA; --warn:#9A5B00; --warn-soft:#FBF0DC;
+  --sans:'Noto Sans SC','PingFang SC','Microsoft YaHei',system-ui,sans-serif;
+  --serif:'Noto Serif SC','Songti SC','SimSun',serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F141B; --surface:#171E28; --sunk:#121821; --ink:#E5EAF1; --muted:#9AA6B6; --line:#2A3443;
+  --seal:#F2766A; --seal-soft:#3A1D1B; --navy:#93B6E2; --navy-soft:#1C2A3D;
+  --ok:#55C792; --ok-soft:#173226; --warn:#F0B354; --warn-soft:#352812; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F141B; --surface:#171E28; --sunk:#121821; --ink:#E5EAF1; --muted:#9AA6B6; --line:#2A3443;
+  --seal:#F2766A; --seal-soft:#3A1D1B; --navy:#93B6E2; --navy-soft:#1C2A3D;
+  --ok:#55C792; --ok-soft:#173226; --warn:#F0B354; --warn-soft:#352812; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;padding-inline:16px;padding-block:16px 32px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{font-family:var(--serif);font-size:26px;margin:0;letter-spacing:2px}
+.brand span{color:var(--muted);font-size:13px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:2px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--surface)}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 14px}
+button:hover{border-color:var(--navy)}
+button:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+button.primary{background:var(--navy);border-color:var(--navy);color:var(--surface);font-weight:500}
+button.human{background:var(--seal);border-color:var(--seal);color:var(--surface);font-weight:500}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.link{border:none;background:none;padding:0;color:var(--navy);text-decoration:underline}
+/* stepper */
+.steps{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0}
+.step b{font-size:14px}
+.step small{font-size:11px;color:var(--muted)}
+.step.cur{border-color:var(--navy);box-shadow:inset 0 -3px 0 var(--navy)}
+.step.done b::after{content:" ✓";color:var(--ok)}
+.step.hum small{color:var(--seal)}
+@media (max-width:700px){.steps{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* main */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+@media (max-width:980px){.main{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel h2{margin:0;font-size:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.who{font-size:12px;font-weight:500;padding:2px 8px;border-radius:6px;background:var(--navy-soft);color:var(--navy)}
+.who.h{background:var(--seal-soft);color:var(--seal)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.cols.draft{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+@media (max-width:760px){.cols,.cols.draft{grid-template-columns:minmax(0,1fr)}}
+.doc{background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:18px 20px;font-family:var(--serif);font-size:15px;line-height:1.9;min-width:0}
+.doc .hd{color:var(--seal);font-weight:700;text-align:center;font-size:22px;letter-spacing:4px}
+.doc .no{text-align:center;color:var(--muted);font-size:14px}
+.doc hr{border:none;border-top:2px solid var(--seal);margin:8px 0 14px}
+.doc .tt{text-align:center;font-weight:700;font-size:17px;margin:4px 0 10px}
+.doc p{margin:0 0 4px;text-indent:2em}
+.doc p.ni{text-indent:0}
+.doc .sign{text-align:right;text-indent:0}
+.doc sup{color:var(--seal);font-family:var(--mono);font-size:11px}
+.kv{display:grid;grid-template-columns:7em minmax(0,1fr);gap:6px 12px;font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.box{border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.box h3{margin:0;font-size:15px}
+.banner{border-radius:10px;padding:12px 16px;font-size:14px}
+.banner.bad{background:var(--seal-soft);color:var(--seal);border:1px solid var(--seal)}
+.banner.good{background:var(--ok-soft);color:var(--ok);border:1px solid var(--ok)}
+.banner.info{background:var(--navy-soft);color:var(--navy);border:1px solid var(--navy)}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500;font-size:12.5px;white-space:nowrap}
+.chip{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.c-ok{background:var(--ok-soft);color:var(--ok)} .c-bad{background:var(--seal-soft);color:var(--seal)} .c-warn{background:var(--warn-soft);color:var(--warn)} .c-n{background:var(--navy-soft);color:var(--navy)}
+textarea{width:100%;min-height:440px;resize:vertical;font-family:var(--serif);font-size:14.5px;line-height:1.85;color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.finding{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.finding.error{border-left-color:var(--seal)} .finding.warn{border-left-color:var(--warn)} .finding.pass{border-left-color:var(--ok)}
+.finding .t{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.finding .act{display:flex;gap:8px}
+.finding .act button{padding:3px 10px;font-size:12.5px}
+.counts{display:flex;gap:8px;flex-wrap:wrap}
+label.ck{display:flex;gap:8px;align-items:center;font-size:14px}
+input[type=text],select{font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--sunk);color:var(--ink)}
+.note{font-size:12.5px;color:var(--muted)}
+/* trace */
+.trace{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);background:var(--surface);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;max-height:calc(100vh - 40px);min-width:0}
+@media (max-width:980px){.trace{position:static;max-height:420px}}
+.trace h2{margin:0;padding:14px 16px;font-size:15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.state{padding:10px 16px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12px;color:var(--muted)}
+.state b{color:var(--navy)}
+#log{overflow-y:auto;padding:8px 16px 16px;display:flex;flex-direction:column;gap:8px;font-size:12.5px}
+.ev{display:grid;grid-template-columns:58px minmax(0,1fr);gap:8px}
+.ev time{font-family:var(--mono);color:var(--muted);font-size:11.5px;padding-top:1px}
+.ev .who{font-size:11px;padding:0 6px;margin-right:6px}
+.ev.sys .who{background:var(--sunk);color:var(--muted)}
+.dots::after{content:"…";animation:d 1s steps(3) infinite}
+@keyframes d{0%{content:"."}33%{content:".."}66%{content:"..."}}
+@media (prefers-reduced-motion:reduce){.dots::after{animation:none;content:"…"}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand"><h1>政枢 · 办文工作台</h1><span>机关办文协同智能体 · 交互演示</span></div>
+    <div class="row">
+      <span class="tag">演示数据均为虚构 · 核稿规则在本页实时运行</span>
+      <button id="reset">重新开始</button>
+    </div>
+  </header>
+  <nav class="steps" id="steps" aria-label="办文步骤"></nav>
+  <div class="main">
+    <section class="panel" id="work" aria-live="polite"></section>
+    <aside class="trace" aria-label="智能体运行日志">
+      <h2>运行日志 <span class="tag" id="caseid">办件 —</span></h2>
+      <div class="state" id="state"></div>
+      <div id="log"></div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const STEPS=[
+  {k:'收文',s:'收文智能体',h:false},
+  {k:'批示',s:'人工决策',h:true},
+  {k:'起草',s:'起草智能体',h:false},
+  {k:'核稿',s:'核稿智能体',h:false},
+  {k:'签发',s:'人工决策',h:true},
+  {k:'督办',s:'督办智能体',h:false}
+];
+const UNITS=['市应急管理局','市住房城乡建设局','市交通运输局','市市场监管局','各区应急管理局'];
+const INCOMING={
+  normal:{org:'[示例省]应急管理厅',no:'[示例]应急〔2026〕15号',title:'关于开展2026年度安全生产大检查的通知',mark:'',
+    body:['各市应急管理局：','为深入贯彻《[示例省]安全生产条例》，有效防范遏制重特大事故，经研究，决定于2026年10月至12月在全省开展安全生产大检查，重点排查危险化学品、建筑施工、道路运输等领域事故隐患。','请各市结合实际制定实施方案，于2026年10月31日前将实施方案报送省厅，于2026年12月20日前报送工作总结。']},
+  secret:{org:'[示例省]某厅',no:'[示例]〔2026〕9号',title:'关于[示例]专项工作部署的通知',mark:'机密★1年',
+    body:['各有关单位：','根据工作安排，现将[示例]专项工作有关事项通知如下……','（本件为演示用涉密样例，内容已略去）']}
+};
+const KB=[
+  {id:'k1',name:'《[示例省]安全生产条例》',ver:'2024年修订',status:'现行',text:'第二十条 生产经营单位应当建立健全安全生产事故隐患排查治理制度，定期组织安全生产检查，及时消除事故隐患。'},
+  {id:'k2',name:'《[示例省]安全生产条例》（2017年版）',ver:'2017年',status:'已修订',rep:'k1',text:'生产经营单位应当定期开展安全生产检查，发现事故隐患应当立即排除。'},
+  {id:'k3',name:'《[示例市]安全生产大检查工作规范》',ver:'2025年',status:'现行',text:'安全生产大检查重点覆盖危险化学品、建筑施工、道路运输、人员密集场所等领域，各部门按职责开展检查，于规定时限前报送实施方案和工作总结。'},
+  {id:'k4',name:'《[示例市]生产安全事故隐患排查治理办法》',ver:'2019年',status:'废止',rep:'k5',text:'生产经营单位应当建立事故隐患排查治理台账，对排查出的事故隐患实行闭环整改。'},
+  {id:'k5',name:'《[示例市]事故隐患排查治理规定》',ver:'2025年',status:'现行',text:'生产经营单位应当建立事故隐患排查治理台账，实行隐患排查、登记、整改、销号闭环管理，安全生产检查发现的事故隐患应当限期整改。'},
+  {id:'k6',name:'《[示例市]政务服务“一网通办”工作规程》',ver:'2024年',status:'现行',text:'政务服务事项实行网上受理、网上办理、网上反馈，提升办事便利度。'}
+];
+const kb=id=>KB.find(d=>d.id===id);
+const DEMO_TODAY=new Date(2026,9,9);
+
+let S;
+function fresh(){return{step:0,done:[],sample:'normal',busy:false,intake:null,blocked:false,lead:'市应急管理局',units:['市应急管理局','市住房城乡建设局','市交通运输局','市市场监管局','各区应急管理局'],opinion:'同意。请市应急管理局牵头代拟转发通知，住建、交通、市场监管部门配合。',retr:null,labels:{},draft:'',findings:null,signed:false,confirmSign:false,tasks:[],today:new Date(DEMO_TODAY),clock:14*3600+30*60,log:[],caseId:''};}
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,matchMedia('(prefers-reduced-motion: reduce)').matches?Math.min(ms,120):ms));
+function clk(){S.clock+=Math.floor(1+Math.random()*3);const h=Math.floor(S.clock/3600),m=Math.floor(S.clock%3600/60),s=S.clock%60;return [h,m,s].map(n=>String(n).padStart(2,'0')).join(':');}
+function log(who,msg,kind){S.log.push({t:clk(),who,msg,kind:kind||(who==='人工'?'h':who==='编排器'?'sys':'')});renderLog();}
+function renderLog(){
+  const el=$('#log');
+  el.innerHTML=S.log.map(e=>`<div class="ev ${e.kind==='sys'?'sys':''}"><time>${e.t}</time><div><span class="who ${e.kind==='h'?'h':''}">${esc(e.who)}</span>${e.msg}</div></div>`).join('')||'<p class="note">还没有记录。点"运行收文智能体"开始。</p>';
+  el.scrollTop=el.scrollHeight;
+  $('#caseid').textContent=S.caseId?('办件 '+S.caseId):'办件 —';
+  const st=STEPS.map((x,i)=>i===S.step?`<b>[${x.k}]</b>`:x.k).join(' → ');
+  $('#state').innerHTML='编排器状态机：'+st;
+}
+function renderSteps(){
+  $('#steps').innerHTML=STEPS.map((x,i)=>{
+    const reach=i<=Math.max(S.step,...S.done.map(d=>d+1),0);
+    return `<button class="step ${i===S.step?'cur':''} ${S.done.includes(i)?'done':''} ${x.h?'hum':''}" data-i="${i}" ${reach&&!S.busy?'':'disabled'} aria-current="${i===S.step?'step':'false'}"><b>${i+1}. ${x.k}</b><small>${x.s}</small></button>`;}).join('');
+  $('#steps').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.step=+b.dataset.i;render();});
+}
+function finish(i){if(!S.done.includes(i))S.done.push(i);S.step=i+1;render();}
+
+/* ---------- 文本工具 ---------- */
+function bigrams(s){s=s.replace(/[^一-龥A-Za-z0-9]/g,'');const set=new Set();for(let i=0;i<s.length-1;i++)set.add(s.slice(i,i+2));return set;}
+function sim(a,b){const A=bigrams(a),B=bigrams(b);let n=0;A.forEach(x=>{if(B.has(x))n++;});return n/Math.sqrt(A.size*B.size||1);}
+const dateRe=/(\d{4})年(\d{1,2})月(\d{1,2})日/;
+
+/* ---------- 1 收文 ---------- */
+function viewIntake(){
+  const d=INCOMING[S.sample];
+  const docHtml=`<div class="doc"><div class="hd">${esc(d.org)}</div><div class="no">${esc(d.no)}${d.mark?`　<span class="chip c-bad">${esc(d.mark)}</span>`:''}</div><hr><div class="tt">${esc(d.title)}</div>${d.body.map((p,i)=>`<p class="${i===0?'ni':''}">${esc(p)}</p>`).join('')}</div>`;
+  let out='';
+  if(S.blocked){
+    out=`<div class="banner bad"><b>已拦截。</b>检测到密级标识"${esc(d.mark)}"。按"涉密不上网、上网不涉密"要求，本件不进入任何模型，已退回登记员转线下涉密流程。</div>
+    <div class="row"><button class="primary" id="toNormal">换回普通样例</button></div>`;
+  } else if(S.intake){
+    const it=S.intake;
+    out=`<div class="box"><h3>收文智能体输出</h3>
+      <dl class="kv"><dt>密级检测</dt><dd><span class="chip c-ok">未检出密级标识</span></dd>
+      <dt>文种</dt><dd>${it.kind}</dd><dt>来文机关</dt><dd>${esc(it.org)}</dd><dt>办理类型</dt><dd><span class="chip c-warn">${it.type}</span></dd>
+      <dt>摘要</dt><dd>${esc(it.summary)}</dd>
+      <dt>时限要求</dt><dd>${it.deadlines.map(x=>`<div>${esc(x)}</div>`).join('')}</dd>
+      <dt>拟办建议</dt><dd>${esc(it.suggest)}</dd></dl></div>
+      <div class="row"><button class="human" id="next">提交领导批示 →</button><span class="note">拟办建议需人工确认后才会流转</span></div>`;
+  } else {
+    out=`<div class="row"><button class="primary" id="run" ${S.busy?'disabled':''}>${S.busy?'<span class="dots">运行中</span>':'运行收文智能体'}</button>
+      <button class="link" id="swap">${S.sample==='normal'?'换成涉密样例，看入口拦截':'换回普通样例'}</button></div>`;
+  }
+  $('#work').innerHTML=`<h2>来文登记 <span class="who">收文智能体</span></h2>
+    <p class="note">来文经公文交换系统到达。编排器先做密级检测，再交给收文智能体分类、摘要、抽取时限、给出拟办建议。</p>${docHtml}${out}`;
+  const run=$('#run'); if(run) run.onclick=runIntake;
+  const sw=$('#swap'); if(sw) sw.onclick=()=>{S.sample=S.sample==='normal'?'secret':'normal';render();};
+  const tn=$('#toNormal'); if(tn) tn.onclick=()=>{S.sample='normal';S.blocked=false;render();};
+  const nx=$('#next'); if(nx) nx.onclick=()=>finish(0);
+}
+async function runIntake(){
+  const d=INCOMING[S.sample];
+  S.busy=true;render();
+  S.caseId='BJ-20261009-'+String(17+Math.floor(Math.random()*40)).padStart(3,'0');
+  log('编排器',`来文到达，建立办件 <b>${S.caseId}</b>`);
+  await sleep(500);
+  const all=d.title+d.no+(d.mark||'')+d.body.join('');
+  const hit=all.match(/(绝密|机密|秘密)(★|$|\s)/);
+  if(hit){
+    log('编排器',`密级检测命中"${hit[1]}"标识 → <b>拦截</b>，不调用模型`,'sys');
+    log('编排器','转线下涉密流程，已写入审计日志','sys');
+    S.blocked=true;S.busy=false;render();return;
+  }
+  log('编排器','密级检测：未命中（规则 + 分类模型双检）');
+  await sleep(500);
+  log('收文智能体','识别文种、来文机关与办理类型');
+  await sleep(600);
+  const text=d.body.join('');
+  const deadlines=[];
+  text.split(/[，。；]/).forEach(seg=>{const m=seg.match(/于?(\d{4}年\d{1,2}月\d{1,2}日)前(.*)/);if(m)deadlines.push(`${m[1]}前　${m[2].replace(/^将/,'').trim()}`);});
+  const firstSent=(d.body[1]||'').split('，').slice(-2).join('，').replace(/。$/,'');
+  S.intake={kind:/通知/.test(d.title)?'通知（上级下行文）':'其他',org:d.org,type:deadlines.length?'需办理 · 含报送时限':'阅知',
+    summary:firstSent.replace(/^经研究，/,'省厅')+'；要求各市制定实施方案并按时报送。',
+    deadlines,suggest:'建议由市应急管理局牵头，会同住建、交通运输、市场监管等部门办理，代拟转发通知。'};
+  log('收文智能体',`抽取时限 ${deadlines.length} 项，生成摘要与拟办建议`);
+  log('编排器','进入<b>人工节点：领导批示</b>，流程暂停等待','sys');
+  S.busy=false;render();
+}
+
+/* ---------- 2 批示 ---------- */
+function viewApprove(){
+  $('#work').innerHTML=`<h2>领导批示 <span class="who h">人工决策</span></h2>
+    <div class="banner info">拟办建议：${esc(S.intake.suggest)}</div>
+    <div class="cols">
+      <div class="box"><h3>承办单位</h3>
+        ${UNITS.map((u,i)=>`<label class="ck"><input type="checkbox" id="u${i}" ${S.units.includes(u)?'checked':''}> ${u}</label>`).join('')}
+        <label class="ck">牵头单位 <select id="lead">${UNITS.slice(0,4).map(u=>`<option ${u===S.lead?'selected':''}>${u}</option>`).join('')}</select></label>
+      </div>
+      <div class="box"><h3>批示意见</h3><textarea id="op" style="min-height:140px">${esc(S.opinion)}</textarea></div>
+    </div>
+    <div class="row"><button class="human" id="ok">确认批示</button><span class="note">批示是人工关口，智能体不能代为确认</span></div>`;
+  $('#ok').onclick=()=>{
+    S.units=UNITS.filter((u,i)=>$('#u'+i).checked);S.lead=$('#lead').value;S.opinion=$('#op').value.trim()||'同意。';
+    log('人工',`领导批示：${esc(S.opinion)}`);
+    log('编排器',`智能分办 → 牵头 ${esc(S.lead)}，配合 ${S.units.filter(u=>u!==S.lead).length} 家，派单并设定时限`);
+    finish(1);
+  };
+}
+
+/* ---------- 3 起草 ---------- */
+function buildDraft(L,flawed){
+  const others=S.units.filter(u=>u!==S.lead&&u!=='各区应急管理局');
+  const head=others.length?others.join('、'):'市有关部门';
+  const ref=id=>L[id]?`[${L[id]}]`:'';
+  if(!flawed) return [
+`${S.lead.replace('市','[示例市]')}文件`,
+`[示例]应急〔2026〕88号`,
+``,
+`关于开展2026年度全市安全生产大检查的通知`,
+``,
+`各区应急管理局，${head}：`,
+`为贯彻落实省应急管理厅《关于开展2026年度安全生产大检查的通知》（[示例]应急〔2026〕15号）要求，依据《[示例省]安全生产条例》第二十条${ref('k1')}，决定在全市开展安全生产大检查。现将有关事项通知如下：`,
+`一、检查范围`,
+`按照《[示例市]安全生产大检查工作规范》${ref('k3')}，重点检查危险化学品、建筑施工、道路运输、人员密集场所等领域。`,
+`二、工作要求`,
+`（一）各单位要依据《[示例市]事故隐患排查治理规定》${ref('k5')}建立隐患台账，实行排查、登记、整改、销号闭环管理。`,
+`（二）${head}于2026年10月25日前报送实施方案。`,
+`（三）各区应急管理局于2026年12月15日前报送工作总结。`,
+``,
+`${S.lead.replace('市','[示例市]')}`,
+`2026年10月9日`].join('\n');
+  return [
+`${S.lead.replace('市','[示例市]')}文件`,
+`[示例]应急(2026)88号`,
+``,
+`关于开展2026年度全市安全生产大检查的通知`,
+``,
+`各区应急管理局，${head}：`,
+`为贯彻落实省应急管理厅《关于开展2026年度安全生产大检查的通知》（[示例]应急〔2026〕15号）要求，依据《[示例省]安全生产条例》第二十条${ref('k1')}，决定在全市开展安全生产大检查。现将有关事项通知如下：`,
+`一.检查范围`,
+`按照《[示例市]安全生产大检查工作规范》${ref('k3')}，重点检查危险化学品、建筑施工、道路运输、人员密集场所等领域。`,
+`二、工作要求`,
+`（一）各单位要依据《[示例市]生产安全事故隐患排查治理办法》建立隐患台账，做到闭环整改。`,
+`(二)${head}于2026年10月25日前报送实施方案。`,
+`（三）各区应急管理局截止2026年12月15日报送工作总结。`,
+``,
+`${S.lead.replace('市','[示例市]')}`,
+`2026年10月9日`].join('\n');
+}
+function viewDraft(){
+  let retrHtml='';
+  if(S.retr){
+    retrHtml=`<div class="box"><h3>依据检索（BM25 + 向量混合召回 → 重排 → 时效过滤）</h3><div class="tblwrap"><table>
+      <tr><th>文件</th><th>状态</th><th>相关度</th><th>处理</th></tr>
+      ${S.retr.map(r=>`<tr><td>${esc(r.d.name)}<div class="note">${esc(r.d.ver)}</div></td><td><span class="chip ${r.d.status==='现行'?'c-ok':'c-bad'}">${r.d.status}</span></td><td>${r.score.toFixed(2)}</td><td>${r.use?`<span class="chip c-n">采用 [${S.labels[r.d.id]}]</span>`:r.d.status!=='现行'?`<span class="chip c-bad">时效过滤</span>${r.d.rep?`<div class="note">现行：${esc(kb(r.d.rep).name)}</div>`:''}`:'<span class="chip c-warn">相关度不足</span>'}</td></tr>`).join('')}
+    </table></div></div>`;
+  }
+  const refs=Object.entries(S.labels).sort((a,b)=>a[1]-b[1]).map(([id,n])=>`<div>[${n}] ${esc(kb(id).name)}（${esc(kb(id).ver)}）<div class="note">${esc(kb(id).text)}</div></div>`).join('');
+  $('#work').innerHTML=`<h2>辅助起草 <span class="who">起草智能体</span></h2>
+    <p class="note">起草智能体按"通知（转发类）"模板生成初稿，每条依据都标注出处编号；无依据的事实句不输出。</p>
+    ${S.draft?'':`<div class="row"><button class="primary" id="run" ${S.busy?'disabled':''}>${S.busy?'<span class="dots">检索与生成中</span>':'运行起草智能体'}</button></div>`}
+    ${retrHtml}
+    ${S.draft?`<div class="cols draft"><div style="display:flex;flex-direction:column;gap:8px;min-width:0"><label for="ta" class="note">代拟稿（可直接编辑）<span class="chip c-warn">AI 辅助生成</span></label><textarea id="ta">${esc(S.draft)}</textarea></div>
+      <div class="box"><h3>依据出处</h3>${refs}</div></div>
+      <div class="row"><button class="primary" id="next">提交核稿 →</button><button id="paste">模拟办文人员改稿（粘贴 2023 年旧稿段落）</button></div>
+      <p class="note">真实场景里，办文人员常从旧稿复制段落。点上面的按钮模拟这一操作，下一步看核稿智能体能不能发现问题。</p>`:''}`;
+  const run=$('#run'); if(run) run.onclick=runDraft;
+  const ta=$('#ta'); if(ta) ta.oninput=()=>{S.draft=ta.value;};
+  const ps=$('#paste'); if(ps) ps.onclick=()=>{S.draft=buildDraft(S.labels,true);log('人工','办文人员改稿：粘贴 2023 年同类发文段落');render();};
+  const nx=$('#next'); if(nx) nx.onclick=()=>{S.findings=null;log('编排器','代拟稿提交核稿');finish(2);};
+}
+async function runDraft(){
+  S.busy=true;render();
+  const d=INCOMING.normal;
+  const q=d.title+d.body.join('')+S.intake.suggest;
+  log('起草智能体','构造检索请求：来文正文 + 拟办意见');
+  await sleep(600);
+  let rs=KB.map(doc=>({d:doc,score:sim(q,doc.name+doc.text)})).sort((a,b)=>b.score-a.score);
+  log('起草智能体',`召回 ${rs.length} 份候选，重排完成`);
+  await sleep(500);
+  const TH=0.08;let n=0;S.labels={};
+  rs.forEach(r=>{r.use=r.d.status==='现行'&&r.score>=TH;});
+  ['k1','k3','k5'].concat(KB.map(x=>x.id)).forEach(id=>{const r=rs.find(x=>x.d.id===id);if(r&&r.use&&!S.labels[id])S.labels[id]=++n;});
+  const filtered=rs.filter(r=>r.d.status!=='现行').length;
+  log('起草智能体',`时效过滤 ${filtered} 份（已修订 / 废止），采用 ${n} 份现行依据`);
+  S.retr=rs;
+  await sleep(600);
+  S.draft=buildDraft(S.labels,false);
+  log('起草智能体','套用"通知（转发类）"模板，生成带引用初稿');
+  S.busy=false;render();
+}
+
+/* ---------- 4 核稿：规则引擎 ---------- */
+function check(text){
+  const F=[];const lines=text.split('\n');
+  const m1=text.match(/[(（\[](\d{4})[)）\]](\d+)号/);
+  if(m1) F.push({lv:'error',cat:'格式',msg:`发文字号年份应使用六角括号〔〕：${m1[0]}`,find:m1[0],fix:t=>t.replace(m1[0],`〔${m1[1]}〕${m1[2]}号`)});
+  lines.forEach(l=>{const h=l.match(/^([一二三四五六七八九十]+)[\.．]\s*/);if(h)F.push({lv:'error',cat:'格式',msg:`一级标题序号应为"${h[1]}、"：${l}`,find:l,fix:t=>t.replace(l,l.replace(h[0],h[1]+'、'))});});
+  lines.forEach(l=>{const h=l.match(/^\(([一二三四五六七八九十]+)\)/);if(h)F.push({lv:'error',cat:'格式',msg:`二级标题应使用全角括号"（${h[1]}）"`,find:h[0],fix:t=>t.replace(l,l.replace(h[0],`（${h[1]}）`))});});
+  KB.filter(d=>d.status!=='现行').forEach(d=>{
+    if(text.includes(d.name)){
+      const rep=kb(d.rep);const lab=S.labels[rep.id];
+      F.push({lv:'error',cat:'依据',msg:`引用的${d.name}已${d.status}，现行为${rep.name}`,find:d.name,fix:lab?t=>t.replace(d.name,rep.name+`[${lab}]`):null,_skip:d.name});
+    }
+  });
+  lines.forEach(l=>{
+    if(/(依据|按照|根据)《/.test(l)&&!/\[\d+\]/.test(l)&&!KB.some(d=>d.status!=='现行'&&l.includes(d.name)))
+      F.push({lv:'warn',cat:'溯源',msg:'该句引用了文件，但没有可溯源的出处编号',find:l,fix:null});
+  });
+  const m2=text.match(/截止(\d{4}年\d{1,2}月\d{1,2}日)(报送|提交|完成)/);
+  if(m2) F.push({lv:'warn',cat:'文字',msg:`时限表述不规范，建议改为"于${m2[1]}前${m2[2]}"`,find:m2[0],fix:t=>t.replace(m2[0],`于${m2[1]}前${m2[2]}`)});
+  const m3=text.match(/\d{4}[.．\/]\d{1,2}[.．\/]\d{1,2}/);
+  if(m3) F.push({lv:'warn',cat:'格式',msg:`日期应写作"××××年×月×日"：${m3[0]}`,find:m3[0],fix:null});
+  const m4=text.match(/(绝密|机密|秘密|内部资料)/);
+  if(m4) F.push({lv:'error',cat:'保密',msg:`检出敏感标识"${m4[1]}"，请确认是否涉密`,find:m4[1],fix:null});
+  const P=[];
+  if(!F.some(f=>f.cat==='保密')) P.push('未检出密级标识与敏感词');
+  const used=[...new Set((text.match(/\[\d+\]/g)||[]))];
+  if(used.length) P.push(`引用 ${used.join('')} 均对应现行有效依据`);
+  if(!F.some(f=>f.msg.includes('发文字号'))) P.push('发文字号格式符合 GB/T 9704');
+  if(/\n\d{4}年\d{1,2}月\d{1,2}日\s*$/.test(text)) P.push('成文日期格式规范');
+  P.forEach(p=>F.push({lv:'pass',cat:'通过',msg:p}));
+  return F;
+}
+function viewReview(){
+  if(!S.findings) S.findings=check(S.draft);
+  const F=S.findings;const e=F.filter(f=>f.lv==='error').length,w=F.filter(f=>f.lv==='warn').length,p=F.filter(f=>f.lv==='pass').length;
+  $('#work').innerHTML=`<h2>智能核稿 <span class="who">核稿智能体</span></h2>
+    <div class="counts"><span class="chip c-bad">需修改 ${e}</span><span class="chip c-warn">建议 ${w}</span><span class="chip c-ok">通过 ${p}</span>
+    <span class="note">规则在本页实时执行：可直接改稿后点"重新核稿"</span></div>
+    <div class="cols draft"><div style="display:flex;flex-direction:column;gap:8px;min-width:0"><label for="ta" class="note">代拟稿</label><textarea id="ta">${esc(S.draft)}</textarea></div>
+    <div style="display:flex;flex-direction:column;gap:8px;min-width:0">${F.map((f,i)=>`<div class="finding ${f.lv}"><div class="t"><span class="chip ${f.lv==='error'?'c-bad':f.lv==='warn'?'c-warn':'c-ok'}">${f.cat}</span>${esc(f.msg)}</div>${f.lv!=='pass'?`<div class="act">${f.find?`<button data-loc="${i}">定位</button>`:''}${f.fix?`<button class="primary" data-fix="${i}">采纳修改</button>`:'<span class="note">需人工判断</span>'}</div>`:''}</div>`).join('')}</div></div>
+    <div class="row"><button id="re">重新核稿</button><button class="human" id="next">提交签发 →</button></div>`;
+  const ta=$('#ta');ta.oninput=()=>{S.draft=ta.value;};
+  $('#re').onclick=()=>{S.findings=check(S.draft);const n=S.findings.filter(f=>f.lv!=='pass').length;log('核稿智能体',`重新核稿：剩余 ${n} 条意见`);render();};
+  $('#work').querySelectorAll('[data-loc]').forEach(b=>b.onclick=()=>{const f=F[+b.dataset.loc];const i=S.draft.indexOf(f.find);if(i>=0){ta.focus();ta.setSelectionRange(i,i+f.find.length);}});
+  $('#work').querySelectorAll('[data-fix]').forEach(b=>b.onclick=()=>{const f=F[+b.dataset.fix];S.draft=f.fix(S.draft);log('人工',`采纳核稿建议：${esc(f.cat)} · ${esc(f.msg.slice(0,26))}…`);S.findings=check(S.draft);render();});
+  $('#next').onclick=()=>{S.confirmSign=false;log('编排器','进入<b>人工节点：审核签发</b>','sys');finish(3);};
+}
+
+/* ---------- 5 签发 ---------- */
+function renderDoc(text){
+  const L=text.split('\n');const nonEmpty=L.map((l,i)=>[l,i]).filter(x=>x[0].trim());
+  const lastTwo=nonEmpty.slice(-2).map(x=>x[1]);
+  let html='',i=0;
+  const cite=s=>esc(s).replace(/\[(\d+)\]/g,'<sup>[$1]</sup>');
+  nonEmpty.forEach(([l,idx],k)=>{
+    if(k===0) html+=`<div class="hd">${esc(l)}</div>`;
+    else if(k===1) html+=`<div class="no">${esc(l)}</div><hr>`;
+    else if(/^关于.*的通知$/.test(l)) html+=`<div class="tt">${esc(l)}</div>`;
+    else if(lastTwo.includes(idx)) html+=`<p class="sign">${esc(l)}</p>`;
+    else if(/：$/.test(l)&&k<6) html+=`<p class="ni">${cite(l)}</p>`;
+    else html+=`<p>${cite(l)}</p>`;
+  });
+  return `<div class="doc">${html}</div>`;
+}
+function viewSign(){
+  const F=check(S.draft);const open=F.filter(f=>f.lv!=='pass').length;
+  $('#work').innerHTML=`<h2>审核签发 <span class="who h">人工决策</span></h2>
+    ${open?`<div class="banner bad">仍有 ${open} 条核稿意见未处理。</div>`:'<div class="banner good">核稿意见已全部处理，依据均为现行有效版本。</div>'}
+    ${renderDoc(S.draft)}
+    <p class="note">本文由政枢辅助起草，经人工审核签发。</p>
+    ${S.confirmSign?`<div class="banner bad">确认在有未处理意见的情况下签发？<div class="row" style="margin-top:8px"><button class="human" id="force">确认签发</button><button id="cancel">返回</button></div></div>`:''}
+    <div class="row"><button class="human" id="sign">签发</button><button id="reject">驳回重拟</button></div>`;
+  const doSign=()=>{S.signed=true;log('人工','领导审核签发');log('编排器','经公文交换系统发文；定稿回流知识库，AI 辅助标识已写入元数据');extractTasks();finish(4);};
+  $('#sign').onclick=()=>{if(open&&!S.confirmSign){S.confirmSign=true;render();}else doSign();};
+  const fz=$('#force');if(fz)fz.onclick=doSign;
+  const cc=$('#cancel');if(cc)cc.onclick=()=>{S.confirmSign=false;render();};
+  $('#reject').onclick=()=>{log('人工','驳回：退回起草');log('编排器','状态回退至<b>起草</b>，保留修改痕迹','sys');S.step=2;render();};
+}
+
+/* ---------- 6 督办 ---------- */
+function extractTasks(){
+  S.tasks=[];
+  S.draft.split('\n').forEach(l=>{
+    const d=l.match(dateRe);if(!d||!/(报送|提交|完成)/.test(l))return;
+    const what=(l.match(/(报送|提交|完成)([^。]*)/)||[])[0]||'';
+    UNITS.filter(u=>l.includes(u)).forEach(u=>S.tasks.push({unit:u,what:what.replace(/。$/,''),due:new Date(+d[1],+d[2]-1,+d[3]),dueText:d[0],done:false,reminded:false}));
+  });
+  log('督办智能体',`从发文中抽取督办事项 ${S.tasks.length} 项，生成台账`);
+}
+const days=t=>Math.round((t.due-S.today)/86400000);
+function viewSupervise(){
+  const all=S.tasks.length&&S.tasks.every(t=>t.done);
+  const fmt=d=>`${d.getMonth()+1}月${d.getDate()}日`;
+  $('#work').innerHTML=`<h2>督办闭环 <span class="who">督办智能体</span></h2>
+    <div class="row"><span class="tag">演示日期：2026年${fmt(S.today)}</span><button id="adv" ${all?'disabled':''}>时间推进 15 天</button></div>
+    ${all?'<div class="banner good">全部督办事项已反馈办结，办件闭环销号。</div>':''}
+    <div class="tblwrap"><table><tr><th>责任单位</th><th>事项</th><th>时限</th><th>剩余</th><th>状态</th><th></th></tr>
+    ${S.tasks.map((t,i)=>{const n=days(t);const st=t.done?'<span class="chip c-ok">已办结</span>':n<0?'<span class="chip c-bad">已逾期</span>':n<=3?'<span class="chip c-warn">临近时限</span>':'<span class="chip c-n">办理中</span>';
+      return `<tr><td>${esc(t.unit)}</td><td>${esc(t.what)}</td><td>${esc(t.dueText)}</td><td>${t.done?'—':n+' 天'}</td><td>${st}${t.reminded&&!t.done?'<div class="note">已发提醒</div>':''}</td><td>${t.done?'':`<button data-fb="${i}">登记反馈</button>`}</td></tr>`;}).join('')||'<tr><td colspan="6" class="note">发文中没有可抽取的时限事项。</td></tr>'}
+    </table></div>
+    <p class="note">督办智能体按时限自动提醒；"登记反馈"代表承办单位通过政务即时通讯回传办理结果，属于人工动作。</p>`;
+  const adv=$('#adv');if(adv)adv.onclick=()=>{
+    S.today=new Date(S.today.getTime()+15*86400000);
+    log('编排器',`时间推进至 ${fmt(S.today)}`,'sys');
+    S.tasks.forEach(t=>{const n=days(t);if(!t.done&&n<=3&&!t.reminded){t.reminded=true;log('督办智能体',`${n<0?'逾期':'临近时限'}提醒 → ${esc(t.unit)}（${esc(t.what)}）`);}});
+    render();};
+  $('#work').querySelectorAll('[data-fb]').forEach(b=>b.onclick=()=>{const t=S.tasks[+b.dataset.fb];t.done=true;log('人工',`${esc(t.unit)} 反馈：${esc(t.what)} 已完成`);
+    if(S.tasks.every(x=>x.done)){log('督办智能体','全部事项办结，办件闭环销号');if(!S.done.includes(5))S.done.push(5);}render();});
+}
+
+function render(){
+  renderSteps();renderLog();
+  [viewIntake,viewApprove,viewDraft,viewReview,viewSign,viewSupervise][S.step]();
+}
+$('#reset').onclick=()=>{S=fresh();render();};
+S=fresh();render();
+window.__zs={check,sim,KB,buildDraft,get S(){return S;}};
+})();
+</script>
+
+</body></html>
