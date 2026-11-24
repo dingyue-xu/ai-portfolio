@@ -1,0 +1,581 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>公文智脑演示</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@400;700&display=swap">
+<style>
+/* Layout: OA-style workbench — slim top bar, left nav of four agents, working area split into input and agent output. */
+:root {
+  --bg: #EEF0EC;
+  --surface: #FAFBF8;
+  --surface-2: #E4E7E1;
+  --fg: #16233A;
+  --muted: #586172;
+  --line: #D3D7CF;
+  --accent: #B23A2E;
+  --accent-soft: #F3E1DC;
+  --ink: #16233A;
+  --on-ink: #EEF0EC;
+  --ok: #2F7A4F;
+  --ok-soft: #DDEEE2;
+  --warn: #9A6200;
+  --warn-soft: #F6E9C9;
+  --doc-bg: #FFFFFE;
+  --doc-fg: #1B1B1B;
+  --doc-red: #C1281C;
+  --font-ui: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+  --font-doc: 'Noto Serif SC', 'Songti SC', 'SimSun', Georgia, serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E141D; --surface: #17202D; --surface-2: #222D3C; --fg: #E4E8EE; --muted: #9AA5B4; --line: #2E3A4B;
+    --accent: #E0675A; --accent-soft: #3A2224; --ink: #0A0F16; --on-ink: #E4E8EE;
+    --ok: #6CC08E; --ok-soft: #1C3426; --warn: #E2B45A; --warn-soft: #3A3020;
+    --doc-bg: #F3F1EB; --doc-fg: #1B1B1B; --doc-red: #C1281C; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E141D; --surface: #17202D; --surface-2: #222D3C; --fg: #E4E8EE; --muted: #9AA5B4; --line: #2E3A4B;
+  --accent: #E0675A; --accent-soft: #3A2224; --ink: #0A0F16; --on-ink: #E4E8EE;
+  --ok: #6CC08E; --ok-soft: #1C3426; --warn: #E2B45A; --warn-soft: #3A3020;
+  --doc-bg: #F3F1EB; --doc-fg: #1B1B1B; --doc-red: #C1281C; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 15px; line-height: 1.6; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.topbar { background: var(--ink); color: var(--on-ink); padding: 10px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.seal { width: 34px; height: 34px; border: 2px solid #D9574A; border-radius: 6px; display: grid; place-items: center; font-family: var(--font-doc); font-weight: 700; color: #E8796C; font-size: 15px; line-height: 1; }
+.brand { font-weight: 700; font-size: 17px; letter-spacing: 1px; }
+.brand small { font-weight: 400; color: #A9B4C4; margin-left: 8px; font-size: 13px; letter-spacing: 0; }
+.demo-tag { margin-left: auto; font-size: 12px; border: 1px solid #5A6880; color: #C9D2DF; padding: 2px 10px; border-radius: 999px; }
+
+.shell { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-height: calc(100vh - 54px); }
+nav.side { background: var(--surface); border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 4px; }
+.side-label { font-size: 12px; color: var(--muted); letter-spacing: 2px; padding: 4px 12px 8px; }
+.nav-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 0; text-align: left; border: 0; background: transparent; color: var(--fg); padding: 10px 12px; border-radius: 8px; }
+.nav-btn span { font-size: 12px; color: var(--muted); }
+.nav-btn:hover { background: var(--surface-2); }
+.nav-btn[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.nav-btn[aria-selected="true"] span { color: var(--accent); font-weight: 400; }
+
+main { padding: 20px 24px 40px; min-width: 0; }
+.page-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.page-head h1 { font-size: 22px; text-wrap: balance; }
+.page-head p { color: var(--muted); font-size: 14px; }
+
+.grid-2 { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.grid-2.wide-left { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.card h2 { font-size: 15px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.card h2 .count { font-weight: 400; color: var(--muted); font-size: 13px; }
+.stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+label.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.field input, .field select, .field textarea, .ask input { font: inherit; font-size: 14px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; width: 100%; }
+.field textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
+.form { display: flex; flex-direction: column; gap: 12px; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 8px 16px; border-radius: 6px; font-size: 14px; }
+.btn:hover { border-color: var(--fg); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #FFF8F6; font-weight: 500; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.hint { font-size: 12px; color: var(--muted); }
+
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; }
+.chip.ok { background: var(--ok-soft); color: var(--ok); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.bad { background: var(--accent-soft); color: var(--accent); }
+.chip.info { background: var(--surface-2); color: var(--muted); }
+
+/* agent timeline */
+.timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.step { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; padding-bottom: 12px; position: relative; }
+.step::before { content: ""; position: absolute; left: 13px; top: 26px; bottom: 0; width: 2px; background: var(--line); }
+.step:last-child::before { display: none; }
+.dot { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; border: 2px solid var(--line); color: var(--muted); background: var(--surface); }
+.step.done .dot { border-color: var(--ink); background: var(--ink); color: var(--on-ink); }
+.step.retry .dot { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+.step.human .dot { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.step.running .dot { border-color: var(--accent); color: var(--accent); animation: pulse 1s ease-in-out infinite; }
+.step.pending { opacity: .45; }
+.step-who { font-weight: 700; font-size: 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.step-what { font-size: 13px; color: var(--muted); }
+.step-what ul { margin: 4px 0 0; padding-left: 18px; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 5px var(--accent-soft); } }
+@media (prefers-reduced-motion: reduce) { .step.running .dot { animation: none; } }
+
+/* official document */
+.doc-wrap { overflow-x: auto; }
+.doc { background: var(--doc-bg); color: var(--doc-fg); font-family: var(--font-doc); padding: 36px 40px 40px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 6px 20px rgba(0,0,0,.06); min-width: 520px; max-width: 760px; margin: 0 auto; position: relative; }
+.doc-org { color: var(--doc-red); text-align: center; font-size: 34px; font-weight: 700; letter-spacing: 6px; line-height: 1.2; }
+.doc-no { text-align: center; font-size: 15px; margin-top: 18px; }
+.doc-rule { border: 0; border-top: 2px solid var(--doc-red); margin: 8px 0 24px; }
+.doc-title { text-align: center; font-size: 21px; font-weight: 700; line-height: 1.5; margin-bottom: 18px; text-wrap: balance; }
+.doc p { font-size: 15.5px; line-height: 1.9; }
+.doc .indent { text-indent: 2em; }
+.doc .h { font-family: var(--font-ui); font-weight: 700; text-indent: 2em; }
+.doc sup { color: var(--doc-red); font-family: var(--font-ui); font-size: 11px; font-weight: 700; cursor: help; }
+.doc-sign { text-align: right; margin-top: 28px; padding-right: 2em; }
+.doc mark { background: #FBE7A1; color: inherit; padding: 0 1px; }
+.draft-stamp { position: absolute; top: 18px; right: 18px; font-family: var(--font-ui); font-size: 12px; color: var(--doc-red); border: 1px solid var(--doc-red); padding: 0 6px; border-radius: 3px; transform: rotate(6deg); }
+
+.sources { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.sources li { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px; }
+.sources .idx { font-weight: 700; color: var(--accent); font-family: var(--font-mono); }
+.sources .name { font-weight: 700; font-size: 14px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.sources .ex { font-size: 13px; color: var(--muted); }
+.sources li.filtered { opacity: .7; border-style: dashed; }
+.sources li.filtered .name { text-decoration: line-through; text-decoration-color: var(--accent); }
+
+/* Q&A */
+.qa-log { display: flex; flex-direction: column; gap: 14px; }
+.bubble { border-radius: 10px; padding: 12px 14px; max-width: 100%; }
+.bubble.q { align-self: flex-end; background: var(--ink); color: var(--on-ink); max-width: 85%; }
+.bubble.a { background: var(--surface); border: 1px solid var(--line); }
+.bubble.a.refuse { border-color: var(--warn); background: var(--warn-soft); }
+.bubble .a-text sup { color: var(--accent); font-weight: 700; font-size: 11px; }
+.bubble .meta { font-size: 12px; color: var(--muted); margin-top: 8px; }
+.ask { display: flex; gap: 8px; margin-top: 12px; }
+.ask input { flex: 1; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-btn { border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+.chip-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* intake */
+.inbox { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.inbox button { width: 100%; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.inbox button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.inbox .from { font-size: 12px; color: var(--muted); }
+.ocr { font-family: var(--font-doc); font-size: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; line-height: 1.8; white-space: pre-wrap; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 500; color: var(--muted); font-size: 13px; white-space: nowrap; }
+.table-wrap { overflow-x: auto; }
+.reco { display: flex; flex-direction: column; gap: 8px; }
+.reco-item { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; }
+.reco-item.top { border-color: var(--ink); }
+.bar { grid-column: 1 / -1; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--ink); }
+.reco-item.top .bar i { background: var(--accent); }
+.blocked { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--fg); border-radius: 8px; padding: 14px; }
+.blocked b { color: var(--accent); }
+
+/* supervision */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.stat b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+.src-quote { font-size: 12px; color: var(--muted); }
+.report { font-family: var(--font-doc); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; white-space: pre-wrap; font-size: 14px; line-height: 1.8; }
+
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--on-ink); padding: 10px 18px; border-radius: 8px; font-size: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.2); max-width: calc(100% - 32px); }
+
+@media (max-width: 960px) {
+  .grid-2, .grid-2.wide-left { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  nav.side { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px 12px; }
+  .side-label { display: none; }
+  .nav-btn { flex: 0 0 auto; }
+  .nav-btn span { display: none; }
+  main { padding: 16px 16px 40px; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .doc { padding: 24px 22px; }
+}
+</style>
+
+<header class="topbar">
+  <div class="seal" aria-hidden="true">公</div>
+  <div class="brand">公文智脑<small>机关公文全流程多智能体平台</small></div>
+  <span class="demo-tag">演示版 · 所有单位、文件与数据均为示例</span>
+</header>
+
+<div class="shell">
+  <nav class="side" role="tablist" aria-label="功能">
+    <p class="side-label">智能体</p>
+    <button class="nav-btn" role="tab" id="tab-draft" aria-selected="true" aria-controls="panel-draft">起草与核稿<span>多智能体协同生成公文</span></button>
+    <button class="nav-btn" role="tab" id="tab-qa" aria-selected="false" aria-controls="panel-qa">政策问答<span>可溯源 RAG 检索</span></button>
+    <button class="nav-btn" role="tab" id="tab-intake" aria-selected="false" aria-controls="panel-intake">收文分办<span>要素抽取 · 涉密拦截</span></button>
+    <button class="nav-btn" role="tab" id="tab-track" aria-selected="false" aria-controls="panel-track">督办看板<span>纪要 → 任务 → 提醒</span></button>
+  </nav>
+
+  <main>
+    <!-- ============ 起草与核稿 ============ -->
+    <section id="panel-draft" role="tabpanel" aria-labelledby="tab-draft">
+      <div class="page-head"><h1>起草与核稿</h1><p>总控 → 检索 → 起草 → 核稿，不通过自动退回，最后由人确认</p></div>
+      <div class="grid-2">
+        <div class="stack">
+          <form class="card form" id="draft-form">
+            <h2>发文需求</h2>
+            <label class="field">文种
+              <select id="f-type"><option>通知</option><option disabled>通报（演示未开放）</option><option disabled>请示（演示未开放）</option></select>
+            </label>
+            <label class="field">标题
+              <input id="f-title" value="关于开展2026年冬季安全生产大检查的通知">
+            </label>
+            <label class="field">发文机关
+              <input id="f-org" value="××市应急管理局">
+            </label>
+            <label class="field">主送机关
+              <input id="f-to" value="各区县应急管理局，局机关各处室">
+            </label>
+            <label class="field">要点（自然语言即可）
+              <textarea id="f-notes">11月至12月开展全市冬季安全生产大检查，重点是危化品、燃气、建筑施工和人员密集场所；各区县12月20日前报送检查情况。语气要严肃，参照去年同类通知。</textarea>
+            </label>
+            <div class="row">
+              <button type="submit" class="btn primary" id="run-btn">生成初稿</button>
+              <span class="hint">演示版按预设场景生成，可修改标题与机关名称</span>
+            </div>
+          </form>
+          <div class="card">
+            <h2>智能体协同过程 <span class="count" id="tl-status">已完成</span></h2>
+            <ol class="timeline" id="timeline"></ol>
+          </div>
+        </div>
+        <div class="stack">
+          <div class="card">
+            <h2>初稿预览 <span class="chip info" id="doc-state">草稿 · 待人工确认</span></h2>
+            <div class="doc-wrap"><article class="doc" id="doc" aria-live="polite"></article></div>
+            <div class="row" style="margin-top:14px">
+              <button class="btn primary" id="submit-oa">确认并提交 OA 审签</button>
+              <button class="btn" id="show-diff">查看核稿修改</button>
+            </div>
+          </div>
+          <div class="card">
+            <h2>引用依据 <span class="count">检索召回 12 条 · 重排保留 4 条 · 过滤 1 条</span></h2>
+            <ul class="sources" id="sources"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 政策问答 ============ -->
+    <section id="panel-qa" role="tabpanel" aria-labelledby="tab-qa" hidden>
+      <div class="page-head"><h1>政策问答</h1><p>只依据知识库作答，每个结论带出处；找不到依据就直说</p></div>
+      <div class="grid-2 wide-left">
+        <div class="card">
+          <h2>对话</h2>
+          <div class="qa-log" id="qa-log" aria-live="polite"></div>
+          <form class="ask" id="ask-form">
+            <input id="ask-input" placeholder="输入问题，例如：成文日期怎么写？" aria-label="输入问题">
+            <button class="btn primary" type="submit">提问</button>
+          </form>
+        </div>
+        <div class="stack">
+          <div class="card">
+            <h2>试试这些问题</h2>
+            <div class="chips" id="qa-chips"></div>
+          </div>
+          <div class="card">
+            <h2>检索过程 <span class="count" id="qa-trace-head">等待提问</span></h2>
+            <ol class="timeline" id="qa-trace"></ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 收文分办 ============ -->
+    <section id="panel-intake" role="tabpanel" aria-labelledby="tab-intake" hidden>
+      <div class="page-head"><h1>收文分办</h1><p>识别来文要素，按“三定”职责推荐承办处室；涉密文件在入口拦截</p></div>
+      <div class="grid-2">
+        <div class="card">
+          <h2>待办来文 <span class="count">3 件</span></h2>
+          <ul class="inbox" id="inbox"></ul>
+        </div>
+        <div class="stack" id="intake-detail"></div>
+      </div>
+    </section>
+
+    <!-- ============ 督办看板 ============ -->
+    <section id="panel-track" role="tabpanel" aria-labelledby="tab-track" hidden>
+      <div class="page-head"><h1>督办看板</h1><p>从会议纪要中拆解任务、责任单位和时限，到期自动提醒</p></div>
+      <div class="stack">
+        <div class="stats" id="stats"></div>
+        <div class="grid-2">
+          <div class="card">
+            <h2>会议纪要（节选）</h2>
+            <div class="ocr" id="minutes"></div>
+            <p class="hint" style="margin-top:8px">高亮句子 = 督办 Agent 识别出的任务来源</p>
+          </div>
+          <div class="stack">
+            <div class="card">
+              <h2>督办事项 <span class="count">督查员审定后生效</span></h2>
+              <div class="table-wrap"><table id="tasks"></table></div>
+              <div class="row" style="margin-top:12px">
+                <button class="btn primary" id="report-btn">生成进度周报</button>
+                <button class="btn" id="remind-btn">发送到期提醒</button>
+              </div>
+            </div>
+            <div class="card" id="report-card" hidden>
+              <h2>进度周报（草稿）</h2>
+              <div class="report" id="report"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var STEP_MS = reduce ? 120 : 900;
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var toastTimer;
+  function toast(msg) {
+    var t = $('toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 2600);
+  }
+
+  /* ---------- tabs ---------- */
+  var tabs = ['draft', 'qa', 'intake', 'track'];
+  function showTab(name) {
+    tabs.forEach(function (t) {
+      $('tab-' + t).setAttribute('aria-selected', t === name ? 'true' : 'false');
+      $('panel-' + t).hidden = t !== name;
+    });
+    try { localStorage.setItem('gw-tab', name); } catch (e) {}
+  }
+  tabs.forEach(function (t) { $('tab-' + t).addEventListener('click', function () { showTab(t); }); });
+  var startTab = 'draft';
+  if (location.hash && tabs.indexOf(location.hash.slice(1)) >= 0) startTab = location.hash.slice(1);
+  else { try { var saved = localStorage.getItem('gw-tab'); if (tabs.indexOf(saved) >= 0) startTab = saved; } catch (e) {} }
+
+  /* ---------- 起草与核稿 ---------- */
+  var STEPS = [
+    { who: '总控 Agent', kind: 'done', tag: '意图识别', what: '识别为「通知」类发文；拆解为 检索 → 起草 → 核稿 三个子任务，建立任务状态。' },
+    { who: '检索 Agent', kind: 'done', tag: '混合检索', what: 'BM25 + 向量召回 12 条，重排后保留 4 条；按生效日期过滤 1 份已被替代的旧规范。' },
+    { who: '起草 Agent', kind: 'done', tag: '第 1 版', what: '套用「通知」模板与本单位写作风格（参照 2025 年同类通知），生成初稿并标注 3 处引用。' },
+    { who: '核稿 Agent', kind: 'retry', tag: '未通过 · 退回', what: '发现 2 处问题：<ul><li>[规则] 发文字号年份应使用六角括号〔〕，初稿误用了方括号。</li><li>[语义] 第二部分“限期整改”未写明时限，与第四部分报送要求不一致。</li></ul>' },
+    { who: '起草 Agent', kind: 'done', tag: '第 2 版', what: '按核稿意见修订 2 处（下方黄色高亮），其余内容不变。' },
+    { who: '核稿 Agent', kind: 'done', tag: '通过', what: '复核：版式规则 12 项全部通过；3 处引用与原文一致；敏感表述 0 处。' },
+    { who: '人工确认', kind: 'human', tag: '必经节点', what: '请承办人审阅、修改后提交 OA 审签。AI 无权直接签发。' }
+  ];
+
+  function renderTimeline(upTo, running) {
+    var html = STEPS.map(function (s, i) {
+      var cls = i < upTo ? s.kind : (i === upTo && running ? 'running' : 'pending');
+      var chip = s.kind === 'retry' ? 'warn' : (s.kind === 'human' ? 'bad' : 'ok');
+      var tag = i < upTo ? '<span class="chip ' + chip + '">' + s.tag + '</span>' : (i === upTo && running ? '<span class="chip info">执行中…</span>' : '');
+      return '<li class="step ' + cls + '"><div class="dot">' + (i + 1) + '</div><div><div class="step-who">' + s.who + tag + '</div><div class="step-what">' + s.what + '</div></div></li>';
+    }).join('');
+    $('timeline').innerHTML = html;
+  }
+
+  var SOURCES = [
+    { n: 1, name: '《中华人民共和国安全生产法》（2021 年修正）', status: ['现行有效', 'ok'], ex: '摘要：生产经营单位的主要负责人是本单位安全生产第一责任人，对本单位的安全生产工作全面负责。' },
+    { n: 2, name: '《××省冬季安全生产工作的通知》（示例）', status: ['现行有效 · 上级来文', 'ok'], ex: '演示知识库条目：要求各地于冬季开展重点行业领域安全检查并按期报送情况。' },
+    { n: 3, name: '本局《关于开展2025年冬季安全生产检查的通知》（示例）', status: ['范例库', 'info'], ex: '用作结构与语气参照：检查范围 → 检查重点 → 工作要求 → 报送要求。' },
+    { n: 0, name: '《××市安全生产检查工作规范（2018 年版）》（示例）', status: ['已被替代 · 已过滤', 'bad'], ex: '该文件已被 2024 年新版替代，检索阶段自动排除，未进入引用。', filtered: true }
+  ];
+  function renderSources() {
+    $('sources').innerHTML = SOURCES.map(function (s) {
+      return '<li class="' + (s.filtered ? 'filtered' : '') + '"><span class="idx">' + (s.filtered ? '—' : '[' + s.n + ']') + '</span><div><div class="name">' + s.name + ' <span class="chip ' + s.status[1] + '">' + s.status[0] + '</span></div><div class="ex">' + s.ex + '</div></div></li>';
+    }).join('');
+  }
+
+  var showMarks = true;
+  function renderDoc(version) {
+    var org = $('f-org').value.trim() || '××市应急管理局';
+    var title = $('f-title').value.trim() || '关于开展2026年冬季安全生产大检查的通知';
+    var to = $('f-to').value.trim() || '各区县应急管理局，局机关各处室';
+    var fixed = version === 2;
+    var m = function (txt) { return fixed && showMarks ? '<mark>' + txt + '</mark>' : txt; };
+    var docNo = fixed ? m('×应急〔2026〕18号') : '×应急[2026]18号';
+    var rect = fixed ? m('对检查发现的问题隐患，要建立清单、限期整改，一般隐患整改时限不超过15个工作日，重大隐患实行挂牌督办') : '对检查发现的问题隐患，要建立清单、限期整改';
+    $('doc').innerHTML =
+      '<span class="draft-stamp">AI 初稿</span>' +
+      '<div class="doc-org">' + esc(org) + '文件</div>' +
+      '<div class="doc-no">' + docNo + '</div><hr class="doc-rule">' +
+      '<h2 class="doc-title">' + esc(title) + '</h2>' +
+      '<p>' + esc(to) + '：</p>' +
+      '<p class="indent">为深入贯彻安全生产法律法规和上级部署要求<sup title="《中华人民共和国安全生产法》">[1]</sup><sup title="上级来文（示例）">[2]</sup>，切实防范冬季各类生产安全事故，经研究，决定于2026年11月至12月在全市范围内开展冬季安全生产大检查。现将有关事项通知如下：</p>' +
+      '<p class="h">一、检查范围</p>' +
+      '<p class="indent">全市各类生产经营单位，重点是危险化学品、城镇燃气、建筑施工和人员密集场所。</p>' +
+      '<p class="h">二、检查重点</p>' +
+      '<p class="indent">重点检查企业主要负责人安全生产责任落实情况<sup title="《中华人民共和国安全生产法》">[1]</sup>、隐患排查治理制度执行情况和冬季应急准备情况。' + rect + '。</p>' +
+      '<p class="h">三、工作要求</p>' +
+      '<p class="indent">各区县要高度重视，主要负责同志亲自部署，明确责任分工，坚持边查边改，确保检查不走过场<sup title="本局2025年同类通知（范例）">[3]</sup>。</p>' +
+      '<p class="h">四、报送要求</p>' +
+      '<p class="indent">请各区县于2026年12月20日前将检查情况书面报送市应急管理局安全生产综合协调处。</p>' +
+      '<div class="doc-sign"><p>' + esc(org) + '</p><p>2026年10月9日</p></div>';
+  }
+
+  var running = false;
+  function runDraft() {
+    if (running) return;
+    running = true;
+    $('run-btn').disabled = true;
+    $('tl-status').textContent = '运行中';
+    $('doc-state').className = 'chip warn'; $('doc-state').textContent = '生成中';
+    $('doc').innerHTML = '<p style="text-align:center;color:#6B7280;font-family:var(--font-ui)">智能体正在协同处理…</p>';
+    var i = 0;
+    renderTimeline(0, true);
+    (function next() {
+      i++;
+      renderTimeline(i, i < STEPS.length);
+      if (i === 3) renderDoc(1);
+      if (i === 5) renderDoc(2);
+      if (i < STEPS.length) setTimeout(next, STEP_MS);
+      else {
+        running = false; $('run-btn').disabled = false;
+        $('tl-status').textContent = '已完成 · 核稿退回 1 轮';
+        $('doc-state').className = 'chip info'; $('doc-state').textContent = '草稿 · 待人工确认';
+      }
+    })();
+  }
+  $('draft-form').addEventListener('submit', function (e) { e.preventDefault(); runDraft(); });
+  ['f-org', 'f-title', 'f-to'].forEach(function (id) { $(id).addEventListener('input', function () { if (!running) renderDoc(2); }); });
+  $('submit-oa').addEventListener('click', function () {
+    $('doc-state').className = 'chip ok'; $('doc-state').textContent = '已提交 OA · 待领导审签';
+    toast('已提交至 OA 审签流程（演示）');
+  });
+  $('show-diff').addEventListener('click', function () {
+    showMarks = !showMarks; renderDoc(2);
+    $('show-diff').textContent = showMarks ? '隐藏核稿修改' : '查看核稿修改';
+  });
+
+  /* ---------- 政策问答 ---------- */
+  var KB = [
+    { q: '发文字号的年份用什么括号？', keys: ['发文字号', '括号', '文号'], a: '发文字号由发文机关代字、年份、发文顺序号组成，年份应标全称，用六角括号“〔〕”括入，例如“×应急〔2026〕18号”。<sup>[1]</sup>', src: [['GB/T 9704—2012《党政机关公文格式》', '现行有效']] },
+    { q: '成文日期怎么写？', keys: ['成文日期', '日期', '落款'], a: '成文日期用阿拉伯数字将年、月、日标全，年份应标全称，月、日不编虚位（即 1 月写作“1 月”，不写“01 月”）。<sup>[1]</sup>', src: [['GB/T 9704—2012《党政机关公文格式》', '现行有效']] },
+    { q: '党政机关公文有哪些种类？', keys: ['种类', '文种', '哪些'], a: '共 15 种：决议、决定、命令（令）、公报、公告、通告、意见、通知、通报、报告、请示、批复、议案、函、纪要。<sup>[1]</sup>', src: [['《党政机关公文处理工作条例》', '现行有效']] },
+    { q: '请示可以一文多事吗？', keys: ['请示', '一文'], a: '不可以。请示应当一文一事，一般只写一个主送机关；不得在报告中夹带请示事项。<sup>[1]</sup>', src: [['《党政机关公文处理工作条例》（行文规则部分）', '现行有效']] }
+  ];
+  var REFUSE_Q = '明年我市的财政预算总额是多少？';
+  function addBubble(cls, html) { var d = document.createElement('div'); d.className = 'bubble ' + cls; d.innerHTML = html; $('qa-log').appendChild(d); return d; }
+  function trace(items, head) {
+    $('qa-trace-head').textContent = head;
+    $('qa-trace').innerHTML = items.map(function (t, i) {
+      return '<li class="step ' + (t[2] || 'done') + '"><div class="dot">' + (i + 1) + '</div><div><div class="step-who">' + t[0] + '</div><div class="step-what">' + t[1] + '</div></div></li>';
+    }).join('');
+  }
+  function ask(text) {
+    text = text.trim(); if (!text) return;
+    addBubble('q', esc(text));
+    var hit = null, best = 0;
+    KB.forEach(function (k) {
+      var score = k.keys.filter(function (w) { return text.indexOf(w) >= 0; }).length;
+      if (score > best) { best = score; hit = k; }
+    });
+    var wait = addBubble('a', '<span class="hint">检索中…</span>');
+    setTimeout(function () {
+      if (hit) {
+        wait.innerHTML = '<div class="a-text">' + hit.a + '</div><div class="meta">依据：' + hit.src.map(function (s, i) { return '[' + (i + 1) + '] ' + s[0] + ' <span class="chip ok">' + s[1] + '</span>'; }).join('　') + '</div>';
+        trace([['意图识别', '政策 / 规范类问题，走 RAG 检索'], ['混合检索', '关键词 + 向量召回 8 条，权限过滤后 6 条'], ['重排', '保留相关度最高的 2 条片段'], ['生成', '仅依据检索片段作答，附引用编号'], ['引用校验', '答案逐句与原文比对：一致', 'done']], '完成 · 有依据');
+      } else {
+        wait.className = 'bubble a refuse';
+        wait.innerHTML = '<div class="a-text"><b>未在知识库中找到依据。</b>为避免给出不准确的信息，本系统不对此问题作答。建议查询本单位财政部门正式发布的预算文件，或由管理员将相关文件纳入知识库。</div>';
+        trace([['意图识别', '事实类问题，走 RAG 检索'], ['混合检索', '召回 5 条，相关度均低于阈值'], ['拒答判定', '无可引用依据 → 明确提示“未找到依据”，不生成内容', 'retry']], '完成 · 拒答');
+      }
+      $('qa-log').lastElementChild.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+    }, reduce ? 50 : 700);
+  }
+  $('qa-chips').innerHTML = KB.map(function (k) { return '<button class="chip-btn" type="button">' + k.q + '</button>'; }).join('') + '<button class="chip-btn" type="button">' + REFUSE_Q + '</button>';
+  Array.prototype.forEach.call($('qa-chips').querySelectorAll('button'), function (b) { b.addEventListener('click', function () { ask(b.textContent); }); });
+  $('ask-form').addEventListener('submit', function (e) { e.preventDefault(); ask($('ask-input').value); $('ask-input').value = ''; });
+  // seed one finished exchange so the panel opens in a working state
+  (function () {
+    var k = KB[0];
+    addBubble('q', esc(k.q));
+    addBubble('a', '<div class="a-text">' + k.a + '</div><div class="meta">依据：[1] ' + k.src[0][0] + ' <span class="chip ok">' + k.src[0][1] + '</span></div>');
+    trace([['意图识别', '政策 / 规范类问题，走 RAG 检索'], ['混合检索', '关键词 + 向量召回 8 条，权限过滤后 6 条'], ['重排', '保留相关度最高的 2 条片段'], ['生成', '仅依据检索片段作答，附引用编号'], ['引用校验', '答案逐句与原文比对：一致']], '完成 · 有依据');
+  })();
+
+  /* ---------- 收文分办 ---------- */
+  var DOCS = [
+    { id: 'd1', title: '关于加强冬季安全生产工作的紧急通知', from: '××省应急管理厅 · 10月8日', ocr: '××省应急管理厅\n×应急电〔2026〕56号\n\n关于加强冬季安全生产工作的紧急通知\n\n各市应急管理局：\n  入冬以来，……请各地立即组织开展重点行业领域安全检查，于10月20日前将检查情况报送省厅。\n\n（特急）',
+      fields: [['发文机关', '××省应急管理厅'], ['发文字号', '×应急电〔2026〕56号'], ['密级', '无（非涉密）'], ['紧急程度', '特急'], ['办理时限', '2026年10月20日前报送']],
+      reco: [['安全生产综合协调处', 92, '三定职责：“组织协调全市安全生产检查”'], ['危险化学品安全监督管理处', 71, '正文涉及危化品检查'], ['办公室', 35, '仅涉及报送环节']] },
+    { id: 'd2', title: '关于召开全市森林防火工作推进会的通知', from: '××市人民政府办公室 · 10月9日', ocr: '××市人民政府办公室\n\n关于召开全市森林防火工作推进会的通知\n\n各区县人民政府，市直有关部门：\n  经市政府同意，定于10月15日上午9:00召开全市森林防火工作推进会，请各单位分管负责同志参会。',
+      fields: [['发文机关', '××市人民政府办公室'], ['文种', '通知（会议）'], ['密级', '无（非涉密）'], ['紧急程度', '加急'], ['办理时限', '10月15日 9:00 参会']],
+      reco: [['火灾防治管理处', 88, '三定职责：“组织指导森林火灾防治”'], ['办公室', 64, '会务安排、参会人员确定'], ['应急指挥中心', 30, '关联度较低']] },
+    { id: 'd3', title: '××××工作方案（文件首页标有“机密★1年”）', from: '××部门 · 10月9日', secret: true }
+  ];
+  var current = 'd1', analysed = { d1: true };
+  function renderInbox() {
+    $('inbox').innerHTML = DOCS.map(function (d) {
+      var badge = d.secret ? '<span class="chip bad">涉密 · 已拦截</span>' : (analysed[d.id] === 'done' ? '<span class="chip ok">已分办</span>' : '<span class="chip info">待分办</span>');
+      return '<li><button type="button" data-id="' + d.id + '" aria-pressed="' + (d.id === current) + '"><b>' + d.title + '</b><span class="from">' + d.from + '</span>' + '<span>' + badge + '</span></button></li>';
+    }).join('');
+    Array.prototype.forEach.call($('inbox').querySelectorAll('button'), function (b) {
+      b.addEventListener('click', function () { current = b.getAttribute('data-id'); renderInbox(); renderIntake(); });
+    });
+  }
+  function renderIntake() {
+    var d = DOCS.filter(function (x) { return x.id === current; })[0];
+    if (d.secret) {
+      $('intake-detail').innerHTML = '<div class="card"><h2>密级识别结果</h2><div class="blocked"><b>检测到密级标志“机密★1年”，已在入口拦截。</b><p style="margin-top:6px">本系统为非涉密系统：该文件未被 OCR 全文识别、未入库、未送入任何模型，已提示收文人员按涉密载体管理规定线下处理。</p></div><p class="hint" style="margin-top:10px">拦截记录已写入审计日志（操作人、时间、文件标识）。</p></div>';
+      return;
+    }
+    var done = analysed[d.id];
+    var html = '<div class="card"><h2>来文识别（OCR）</h2><div class="ocr">' + esc(d.ocr) + '</div>' +
+      (done ? '' : '<div class="row" style="margin-top:12px"><button class="btn primary" id="analyse">智能识别与分办建议</button></div>') + '</div>';
+    if (done) {
+      html += '<div class="card"><h2>要素抽取</h2><div class="table-wrap"><table>' + d.fields.map(function (f) { return '<tr><th scope="row">' + f[0] + '</th><td>' + f[1] + '</td></tr>'; }).join('') + '</table></div></div>';
+      html += '<div class="card"><h2>承办处室建议 <span class="count">依据“三定”职责库匹配</span></h2><div class="reco">' + d.reco.map(function (r, i) {
+        return '<div class="reco-item' + (i === 0 ? ' top' : '') + '"><div><b>' + r[0] + '</b>' + (i === 0 ? ' <span class="chip bad">推荐</span>' : '') + '<div class="hint">' + r[2] + '</div></div><b style="font-variant-numeric:tabular-nums">' + r[1] + '%</b><div class="bar"><i style="width:' + r[1] + '%"></i></div></div>';
+      }).join('') + '</div><div class="row" style="margin-top:12px">' +
+        (done === 'done' ? '<span class="chip ok">已分办至 ' + d.reco[0][0] + '</span>' : '<button class="btn primary" id="confirm-route">确认分办</button><button class="btn" id="reroute">改派其他处室</button>') +
+        '</div><p class="hint" style="margin-top:8px">分办以办公室人工确认为准，AI 只给建议。</p></div>';
+    }
+    $('intake-detail').innerHTML = html;
+    var a = $('analyse');
+    if (a) a.addEventListener('click', function () { a.disabled = true; a.textContent = '识别中…'; setTimeout(function () { analysed[d.id] = true; renderIntake(); }, reduce ? 50 : 800); });
+    var c = $('confirm-route');
+    if (c) c.addEventListener('click', function () { analysed[d.id] = 'done'; renderInbox(); renderIntake(); toast('已分办至 ' + d.reco[0][0] + '（演示）'); });
+    var r = $('reroute');
+    if (r) r.addEventListener('click', function () { toast('改派后，人工选择会回流为分办样本，用于优化推荐'); });
+  }
+
+  /* ---------- 督办看板 ---------- */
+  var MINUTES = [
+    ['10月9日，局长办公会研究冬季安全生产工作。会议要求：', false],
+    ['一、安全生产综合协调处牵头制定冬季大检查方案，10月15日前提交局党委会审议。', true],
+    ['二、危险化学品安全监督管理处会同各区县，11月30日前完成全市危化品企业全覆盖检查。', true],
+    ['三、火灾防治管理处做好森林防火推进会筹备，10月15日前完成。', true],
+    ['四、应急指挥中心更新冬季应急值守排班表，10月12日前印发。', true],
+    ['五、办公室负责跟踪督办，每周五汇总进度。', true]
+  ];
+  var TASKS = [
+    ['制定冬季大检查方案并提交党委会审议', '安全生产综合协调处', '10月15日', ['进行中', 'info'], '会议要求第一条'],
+    ['完成全市危化品企业全覆盖检查', '危化处 + 各区县', '11月30日', ['进行中', 'info'], '会议要求第二条'],
+    ['森林防火推进会筹备', '火灾防治管理处', '10月15日', ['进行中', 'info'], '会议要求第三条'],
+    ['印发冬季应急值守排班表', '应急指挥中心', '10月12日', ['即将到期', 'warn'], '会议要求第四条'],
+    ['每周五汇总督办进度', '办公室', '每周五', ['已完成本周', 'ok'], '会议要求第五条']
+  ];
+  function renderTrack() {
+    $('minutes').innerHTML = MINUTES.map(function (m) { return m[1] ? '<mark style="background:var(--warn-soft);color:var(--fg)">' + m[0] + '</mark>' : m[0]; }).join('\n');
+    $('tasks').innerHTML = '<tr><th>事项</th><th>责任单位</th><th>时限</th><th>状态</th></tr>' + TASKS.map(function (t) {
+      return '<tr><td>' + t[0] + '<div class="src-quote">来源：' + t[4] + '</div></td><td>' + t[1] + '</td><td style="white-space:nowrap">' + t[2] + '</td><td><span class="chip ' + t[3][1] + '">' + t[3][0] + '</span></td></tr>';
+    }).join('');
+    var c = { info: 0, warn: 0, ok: 0 }; TASKS.forEach(function (t) { c[t[3][1]]++; });
+    $('stats').innerHTML = [[TASKS.length, '督办事项'], [c.info, '进行中'], [c.warn, '即将到期'], [c.ok, '本周已完成']].map(function (s) { return '<div class="stat"><b>' + s[0] + '</b><span>' + s[1] + '</span></div>'; }).join('');
+  }
+  $('report-btn').addEventListener('click', function () {
+    $('report-card').hidden = false;
+    $('report').textContent = '局长办公会议定事项督办进度周报（第 1 期）\n\n共 5 项：进行中 3 项，即将到期 1 项，本周已完成 1 项。\n\n需关注：应急指挥中心“印发冬季应急值守排班表”将于10月12日到期，目前尚未报送完成情况，已自动发送提醒。\n\n其余事项按计划推进，详见附表。\n\n（AI 生成草稿，经办公室审核后报送）';
+    $('report-card').scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+  });
+  $('remind-btn').addEventListener('click', function () { toast('已向应急指挥中心发送到期提醒（演示）'); });
+
+  /* ---------- init ---------- */
+  renderTimeline(STEPS.length, false);
+  $('tl-status').textContent = '已完成 · 核稿退回 1 轮';
+  renderDoc(2);
+  renderSources();
+  renderInbox(); renderIntake();
+  renderTrack();
+  showTab(startTab);
+})();
+</script>
+
+</body></html>

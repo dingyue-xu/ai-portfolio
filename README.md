@@ -1,20 +1,11 @@
-# 许丁玥 · AI 产品作品集
+# Dingyue Xu · AI Product Portfolio
 
-AI 产品经理作品集，涵盖 AIGC 创作工具、Agent 与智能体、AI 评测与用户研究、数据产品四个方向。
+Trilingual (中文 / English / Français) portfolio site — AI product, global GTM and commercialization work.
 
-**在线浏览：** https://dingyue-xu.github.io/ai-portfolio/
+- `index.html` — page layout, styles, motion and rendering
+- `data.js` — all copy in three languages (edit this to change content)
+- `demos/` — interactive project demos opened in the full-screen viewer
+- `shots/` — preview screenshots of the demos
+- `media/` — videos, photos, galleries and the WeChat QR code
 
-整个作品集是一个独立的 HTML 文件，项目页面全部内嵌在里面，点项目会在页面内打开。下载 `index.html` 后用浏览器打开也能离线浏览。
-
-| 项目 | 方向 |
-|---|---|
-| RunningHub AI 创作 App 0→1 | AIGC 创作工具 |
-| 分镜脚本节点与画布 Agent 工作流 | AIGC 创作工具 · Agent |
-| AIGC 视频质量评测 | 评测 |
-| 公文智脑 / 工单协办台 / 政枢办文工作台 | Agent 与智能体 |
-| AI 购物助手委托研究（KCL 硕士论文） | AI 用户研究 |
-| 泡泡玛特 AI 盲盒大屏运营看板 | 数据产品 |
-| 投放计划 Agent、广告分析 Skill、项目知识库 | Agent · 数据分析 |
-| 信号驱动的销售线索系统 | AI 商业化 |
-
-涉及公司业务的项目只展示本人负责的设计方法与可公开的结果，界面与数据均已脱敏。
+Static site, no build step. Served by GitHub Pages.
