@@ -554,7 +554,7 @@ footer p.mono{max-width:760px;text-transform:none;letter-spacing:.04em;line-heig
   <button class="lbnav" data-lbnav="1" aria-label="Next"><svg width="16" height="16" viewBox="0 0 14 14" fill="none"><path d="M1 7h11M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.5"/></svg></button>
 </div>
 
-<script src="data.js"></script>
+<script src="data.js?v=20261125"></script>
 <script>
 /* ================= EXTRA UI STRINGS ================= */
 const UI = {
@@ -595,15 +595,15 @@ const DRSOC = {
  embeds:[["7491998102887599362","2025-04-11"],["7507547337586150678","2025-05-23"],["7439975307735616801","2024-11-22"]],
  links:{tt:"https://www.tiktok.com/@darryring_official",pl:"https://www.tiktok.com/@darryring_official/playlist/Carat%20Comparison-7486049507679963926",ig:"https://www.instagram.com/darryring_official/",paris:"https://fr.darryring.com/blogs/news-and-missions/darry-ring-boutique-in-paris"},
  views:[940.2,193.5,166.9,158.3,158.1],
- zh:{vt:"官方 TikTok 视频（官方播放器嵌入）",in:"在职期间发布",pre:"在职前发布 · 系列播放最高",badge:"公开数据",title:"品牌官方账号 · 公开数据",note:"数据来自 DarryRing 官方 TikTok 公开主页，查询于 2026 年 11 月；为品牌账号整体表现，不代表个人业绩。",
+ zh:{vt:"官方 TikTok 作品展示",in:"在职期间发布",pre:"在职前发布 · 系列播放最高",badge:"公开数据",title:"品牌官方账号 · 公开数据",note:"数据来自 DarryRing 官方 TikTok 公开主页，查询于 2026 年 11 月；为品牌账号整体表现，不代表个人业绩。",
   fol:["36.4万","TikTok 粉丝"],likes:["150万","获赞"],pl:["193万","“Carat Comparison”系列 9 条视频累计观看 · 2025.03 起"],
   vids:["心形钻 · 克拉叠戴","2 克拉 · 钻型对比","马眼形 · 克拉对比","水滴形 · 克拉对比","椭圆形 · 克拉对比"],fmt:v=>(v/10).toFixed(1)+"万",
   src:[["TikTok 主页","tt"],["Carat Comparison 系列","pl"],["Instagram","ig"],["巴黎卢浮宫店（官网）","paris"]],srcK:"来源"},
- en:{vt:"Official TikTok videos (embedded with TikTok's player)",in:"Posted during my time there",pre:"Posted before my time · top of the series",badge:"Public data",title:"Brand's official accounts · public data",note:"Figures from DarryRing's public TikTok profile, checked in November 2026. They reflect the brand account overall, not personal results.",
+ en:{vt:"Official TikTok showcase",in:"Posted during my time there",pre:"Posted before my time · top of the series",badge:"Public data",title:"Brand's official accounts · public data",note:"Figures from DarryRing's public TikTok profile, checked in November 2026. They reflect the brand account overall, not personal results.",
   fol:["363.7K","TikTok followers"],likes:["1.5M","Likes"],pl:["1.93M","Views across the 9-video “Carat Comparison” series · since Mar 2025"],
   vids:["Heart-shaped · carat stack","2 ct · shape showdown","Marquise · carat sizes","Pear · carat sizes","Oval · carat sizes"],fmt:v=>v.toFixed(1)+"K",
   src:[["TikTok profile","tt"],["Carat Comparison series","pl"],["Instagram","ig"],["Paris Louvre boutique (official site)","paris"]],srcK:"Sources"},
- fr:{vt:"Vidéos TikTok officielles (lecteur TikTok intégré)",in:"Publiée pendant ma mission",pre:"Publiée avant ma mission · la plus vue de la série",badge:"Données publiques",title:"Comptes officiels de la marque · données publiques",note:"Chiffres issus du profil TikTok public de DarryRing, consulté en novembre 2026. Ils reflètent le compte de la marque dans son ensemble, et non des résultats personnels.",
+ fr:{vt:"Vidéos TikTok officielles",in:"Publiée pendant ma mission",pre:"Publiée avant ma mission · la plus vue de la série",badge:"Données publiques",title:"Comptes officiels de la marque · données publiques",note:"Chiffres issus du profil TikTok public de DarryRing, consulté en novembre 2026. Ils reflètent le compte de la marque dans son ensemble, et non des résultats personnels.",
   fol:["363,7 k","Abonnés TikTok"],likes:["1,5 M","J'aime"],pl:["1,93 M","Vues cumulées des 9 vidéos « Carat Comparison » · depuis mars 2025"],
   vids:["Cœur · carats superposés","2 ct · duel de tailles","Marquise · carats","Poire · carats","Ovale · carats"],fmt:v=>v.toFixed(1).replace(".",",")+" k",
   src:[["Profil TikTok","tt"],["Série Carat Comparison","pl"],["Instagram","ig"],["Boutique du Louvre (site officiel)","paris"]],srcK:"Sources"}
@@ -931,7 +931,7 @@ function openDetail(k,silent){
      ${p.vis==="social"?(()=>{const S=DRSOC[lang];return `<div class="dsec"><div class="sh mono">${S.title}</div>
        <div class="pubsrc">${S.src.map(x=>`<a class="btn line" href="${DRSOC.links[x[1]]}" target="_blank" rel="noopener">${x[0]}${ext}</a>`).join("")}</div>
        <p class="pnote" style="margin-top:18px">${S.note}</p></div>
-       <div class="dsec"><div class="sh mono">${S.vt}</div><div class="ttgrid">${DRSOC.embeds.map(e=>`<figure><div class="ttf"><iframe src="https://www.tiktok.com/player/v1/${e[0]}?music_info=1&description=1&rel=0" loading="lazy" allow="encrypted-media; fullscreen; picture-in-picture" allowfullscreen title="TikTok"></iframe></div><figcaption class="mono">${e[1]>="2025-01"&&e[1]<="2025-06-30"?S.in:S.pre}</figcaption></figure>`).join("")}</div></div>`})():""}
+       <div class="dsec"><div class="sh mono">${S.vt}</div><div class="ttgrid">${DRSOC.embeds.map(e=>`<figure><div class="ttf"><iframe src="https://www.tiktok.com/player/v1/${e[0]}?music_info=1&description=1&rel=0" loading="lazy" allow="encrypted-media; fullscreen; picture-in-picture" allowfullscreen title="TikTok"></iframe></div></figure>`).join("")}</div></div>`})():""}
      <div class="dsec"><div class="sh mono">${u.what}</div></div>
      <ol class="bul">${d.b.map((b,j)=>`<li style="transition-delay:${.35+j*.08}s">${b}</li>`).join("")}</ol>
    </div>`;
